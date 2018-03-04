@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.smattme</groupId>
-    <artifactId>java-mysql-exporter</artifactId>
+    <artifactId>mysql-backup4j</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
@@ -32,15 +32,15 @@
             <version>1.7.25</version>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.0.0-M4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.25</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.0.0-M4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

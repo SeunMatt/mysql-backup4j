@@ -16,11 +16,9 @@ import java.util.Date;
  * Created by seun_ on 24-Feb-18.
  *
  */
-public class MySqlExportService {
+public class MysqlExportService {
 
-    private Connection connection;
     private Statement stmt;
-    private String driver = "com.mysql.jdbc.Driver";
     private String database;
     private String generatedSql = "";
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -50,7 +48,7 @@ public class MySqlExportService {
 
 
 
-    public MySqlExportService(Properties properties) {
+    public MysqlExportService(Properties properties) {
         this.properties = properties;
     }
 
@@ -61,7 +59,6 @@ public class MySqlExportService {
                 properties.containsKey(DB_NAME);
     }
 
-
     private boolean emailPropertiesSet() {
         return properties != null &&
                properties.containsKey(EMAIL_HOST) &&
@@ -70,39 +67,6 @@ public class MySqlExportService {
                properties.containsKey(EMAIL_PASSWORD) &&
                properties.containsKey(EMAIL_FROM) &&
                properties.containsKey(EMAIL_TO);
-    }
-
-    private void connect(String username, String password) {
-        try {
-            String url = "jdbc:mysql://localhost:3306/" + database;
-            Class.forName(driver);
-            connection = DriverManager.getConnection(url, username, password);
-            stmt = connection.createStatement();
-            logger.debug("DB Connected Successfully");
-        } catch (ClassNotFoundException e1) {
-            logger.error(LOG_PREFIX + ": The database driver [" + driver + "] is not found! " +
-                    "Please first make sure the dependencies are resolved and check that mysql-connector-java:5.1.45 is in your " +
-                    "classpath. If it persists, you can report this as an issue on github \n" +
-                    "https://github.com/SeunMatt/java-mysql-exporter/issues \n" +
-                    e1.getLocalizedMessage()
-                );
-            e1.printStackTrace();
-        } catch (SQLException e2) {
-          logger.error(LOG_PREFIX + ": SQLException occurred while trying to connect to database " + database + " " +
-                  "Please ensure the DB_USERNAME and DB_PASSWORD properties are correct. \n" +
-          e2.getLocalizedMessage());
-          e2.printStackTrace();
-        }
-    }
-
-    private List<String> getAllTables() throws SQLException {
-        List<String> table = new ArrayList<>();
-        ResultSet rs;
-        rs = stmt.executeQuery("SHOW TABLE STATUS FROM `" + database + "`;");
-        while ( rs.next() ) {
-            table.add(rs.getString("Name"));
-        }
-        return table;
     }
 
     private String getTableInsertStatement(String table) throws SQLException {
@@ -118,7 +82,7 @@ public class MySqlExportService {
                 String qtbl = rs.getString(1);
                 String query = rs.getString(2);
                 sql.append("\n\n--");
-                sql.append("\n-- Table dump : ").append(qtbl);
+                sql.append("\n").append(MysqlBaseService.SQL_START_PATTERN).append("  table dump : ").append(qtbl);
                 sql.append("\n--\n\n");
 
                 if(addIfNotExists) {
@@ -131,6 +95,11 @@ public class MySqlExportService {
                 sql.append(query).append(";\n\n");
           }
         }
+
+        sql.append("\n\n--");
+        sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  table dump : ").append(table);
+        sql.append("\n--\n\n");
+
         return sql.toString();
     }
 
@@ -155,8 +124,12 @@ public class MySqlExportService {
         boolean deleteExistingData = Boolean.parseBoolean(properties.containsKey(DELETE_EXISTING_DATA) ? properties.getProperty(DELETE_EXISTING_DATA, "false") : "false");
 
         if(deleteExistingData) {
-            sql.append("\nDELETE FROM `").append(database).append("`.`").append(table).append("`;\n");
+            sql.append(MysqlBaseService.getEmptyTableSQL(database, table));
         }
+
+        sql.append("\n--\n")
+                .append(MysqlBaseService.SQL_START_PATTERN).append(" table insert : ").append(table)
+                .append("\n--\n");
 
         sql.append("INSERT INTO `").append(table).append("`(");
 
@@ -206,6 +179,10 @@ public class MySqlExportService {
         //let's add the terminator
         sql.append(";");
 
+        sql.append("\n--\n")
+                .append(MysqlBaseService.SQL_END_PATTERN).append(" table insert : ").append(table)
+                .append("\n--\n");
+
         //enable FK constraint
         sql.append("\n/*!40000 ALTER TABLE `").append(table).append("` ENABLE KEYS */;\n");
 
@@ -229,7 +206,7 @@ public class MySqlExportService {
 
 
         //get the tables
-        List<String> tables = getAllTables();
+        List<String> tables = MysqlBaseService.getAllTables(database, stmt);
 
         //get the table insert statement for each table
         for (String s: tables) {
@@ -249,7 +226,7 @@ public class MySqlExportService {
         return sql.toString();
     }
 
-    public void export() throws IOException, SQLException{
+    public void export() throws IOException, SQLException, ClassNotFoundException {
 
         //check if properties is set or not
         if(!validateProperties()) {
@@ -259,13 +236,14 @@ public class MySqlExportService {
 
         //connect to the database
         this.database = properties.getProperty(DB_NAME);
-        connect(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD));
+        Connection connection = MysqlBaseService.connect(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD), database);
+        stmt = connection.createStatement();
 
         //generate the final SQL
         String sql = exportToSql();
 
         //create a temp dir
-        dirName = properties.getProperty(MySqlExportService.TEMP_DIR, dirName);
+        dirName = properties.getProperty(MysqlExportService.TEMP_DIR, dirName);
         File file = new File(dirName);
         if(!file.exists()) {
             boolean res = file.mkdir();
