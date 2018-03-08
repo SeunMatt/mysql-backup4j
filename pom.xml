@@ -9,6 +9,36 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>
+        This is a simple library for backing up mysql databases and sending to emails, cloud storage and so on.
+        It also provide a method for programmatically, importing SQL queries generated during the export process,
+    </description>
+    <url>https://github.com/SeunMatt/mysql-backup4j</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Seun Matt</name>
+            <email>smatt382@gmail.com</email>
+            <organization>SmattMe</organization>
+            <organizationUrl>https://smattme.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/SeunMatt/mysql-backup4j.git</connection>
+        <developerConnection>scm:git:ssh://github.com:SeunMatt/mysql-backup4j.git</developerConnection>
+        <url>https://github.com/SeunMatt/mysql-backup4j/tree/master</url>
+    </scm>
+
+
     <dependencies>
         <dependency>
             <groupId>mysql</groupId>
