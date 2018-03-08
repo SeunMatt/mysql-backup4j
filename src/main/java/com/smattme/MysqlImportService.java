@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by seun_ on 01-Mar-18.
@@ -20,6 +21,8 @@ public class MysqlImportService {
     private String username;
     private String password;
     private String sqlString;
+    private String jdbcConnString;
+    private String jdbcDriver;
     private boolean deleteExisting;
     private boolean dropExisting;
     private List<String> tables;
@@ -41,21 +44,25 @@ public class MysqlImportService {
         }
 
         //connect
-        Connection connection = MysqlBaseService.connect(username, password, database);
+        //connect to the database
+
+        Connection connection;
+        if(jdbcConnString.isEmpty()) {
+            connection = MysqlBaseService.connect(username, password,
+                    database, jdbcDriver);
+        }
+        else {
+            database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1);
+            logger.debug("database name extracted from connection string: " + database);
+            connection = MysqlBaseService.connectWithURL(username, username,
+                    jdbcConnString, jdbcDriver);
+        }
+
         Statement stmt = connection.createStatement();
 
         //disable foreign key check
         stmt.addBatch("SET FOREIGN_KEY_CHECKS = 0");
 
-
-        if(dropExisting) {
-
-
-
-
-
-
-        }
 
          if(deleteExisting || dropExisting) {
 
@@ -125,10 +132,10 @@ public class MysqlImportService {
     }
 
     private boolean assertValidParams() {
-        return !this.database.isEmpty() &&
-                !this.username.isEmpty() &&
-                !this.password.isEmpty() &&
-                !this.sqlString.isEmpty();
+        return username != null && !this.username.isEmpty() &&
+                password != null && !this.password.isEmpty() &&
+                sqlString != null && !this.sqlString.isEmpty() &&
+        ( (database != null && !this.database.isEmpty()) || (jdbcConnString != null && !jdbcConnString.isEmpty()) );
     }
 
     public static MysqlImportService builder() {
@@ -165,5 +172,13 @@ public class MysqlImportService {
         return  this;
     }
 
+    public MysqlImportService setJdbcDriver(String jdbcDriver) {
+        this.jdbcDriver = jdbcDriver;
+        return this;
+    }
 
+    public MysqlImportService setJdbcConnString(String jdbcConnString) {
+        this.jdbcConnString = jdbcConnString;
+        return this;
+    }
 }

@@ -45,7 +45,8 @@ public class MysqlExportService {
     public static final String ADD_IF_NOT_EXISTS = "ADD_IF_NOT_EXISTS";
     public static final String DROP_TABLES = "DROP_TABLES";
     public static final String DELETE_EXISTING_DATA = "DELETE_EXISTING_DATA";
-
+    public static final String JDBC_CONNECTION_STRING = "JDBC_CONNECTION_STRING";
+    public static final String JDBC_DRIVER_NAME = "JDBC_DRIVER_NAME";
 
 
     public MysqlExportService(Properties properties) {
@@ -56,7 +57,7 @@ public class MysqlExportService {
         return properties != null &&
                 properties.containsKey(DB_USERNAME) &&
                 properties.containsKey(DB_PASSWORD) &&
-                properties.containsKey(DB_NAME);
+                (properties.containsKey(DB_NAME) || properties.containsKey(JDBC_CONNECTION_STRING));
     }
 
     private boolean emailPropertiesSet() {
@@ -235,8 +236,23 @@ public class MysqlExportService {
         }
 
         //connect to the database
-        this.database = properties.getProperty(DB_NAME);
-        Connection connection = MysqlBaseService.connect(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD), database);
+        database = properties.getProperty(DB_NAME);
+        String jdbcURL = properties.getProperty(JDBC_CONNECTION_STRING, "");
+        String driverName = properties.getProperty(JDBC_DRIVER_NAME, "");
+
+        Connection connection;
+
+        if(jdbcURL.isEmpty()) {
+            connection = MysqlBaseService.connect(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
+                    database, driverName);
+        }
+        else {
+            database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
+            logger.debug("database name extracted from connection string: " + database);
+            connection = MysqlBaseService.connectWithURL(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
+                    jdbcURL, driverName);
+        }
+
         stmt = connection.createStatement();
 
         //generate the final SQL
