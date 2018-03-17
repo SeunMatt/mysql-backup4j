@@ -47,7 +47,7 @@ public class MysqlImportService {
         //connect to the database
 
         Connection connection;
-        if(jdbcConnString.isEmpty()) {
+        if(jdbcConnString == null || jdbcConnString.isEmpty()) {
             connection = MysqlBaseService.connect(username, password,
                     database, jdbcDriver);
         }
