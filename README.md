@@ -2,7 +2,7 @@ mysql-backup4j
 ==============
 
 mysql-backup4j is a library for programmatically exporting mysql databases 
-and sending the zipped dump to email, Amazon S3, Google Drive or any other cloud storge of choice
+and sending the zipped dump to email, Amazon S3, Google Drive or any other cloud storage of choice
 
 **It gives the developer access to the generated zip file and the generated SQL query string**
  for use in other part of the application. 
