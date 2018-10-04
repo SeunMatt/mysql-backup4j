@@ -360,11 +360,7 @@ public class MysqlExportService {
     }
 
     public String setSqlFilename(){
-        if (sqlFileNameProperty()) {
-            return properties.getProperty(SQL_FILE_NAME) + ".sql";
-        } else {
-            return new SimpleDateFormat("d_M_Y_H_mm_ss").format(new Date()) + "_" + database + "_database_dump.sql";
-        }
+        return sqlFileNameProperty() ? properties.getProperty(SQL_FILE_NAME) + ".sql" : new SimpleDateFormat("d_M_Y_H_mm_ss").format(new Date()) + "_" + database + "_database_dump.sql";
     }
 
     public String getSqlFileName() {
