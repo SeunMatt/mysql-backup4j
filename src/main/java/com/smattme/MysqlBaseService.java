@@ -69,6 +69,7 @@ public class MysqlBaseService {
      */
     private static Connection doConnect(String driver, String url, String username, String password) throws SQLException, ClassNotFoundException {
         Class.forName(driver);
+        url = url.concat("?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC");
         Connection connection = DriverManager.getConnection(url, username, password);
         logger.debug("DB Connected Successfully");
         return  connection;
