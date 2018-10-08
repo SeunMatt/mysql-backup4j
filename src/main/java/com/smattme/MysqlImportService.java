@@ -54,7 +54,7 @@ public class MysqlImportService {
         else {
             database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1);
             logger.debug("database name extracted from connection string: " + database);
-            connection = MysqlBaseService.connectWithURL(username, username,
+            connection = MysqlBaseService.connectWithURL(username, password,
                     jdbcConnString, jdbcDriver);
         }
 
