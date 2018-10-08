@@ -52,7 +52,11 @@ public class MysqlImportService {
                     database, jdbcDriver);
         }
         else {
-            database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1);
+            if (jdbcConnString.contains("?")){
+                database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1, jdbcConnString.indexOf("?"));
+            } else {
+                database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1);
+            }
             logger.debug("database name extracted from connection string: " + database);
             connection = MysqlBaseService.connectWithURL(username, username,
                     jdbcConnString, jdbcDriver);

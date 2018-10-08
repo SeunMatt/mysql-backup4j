@@ -157,8 +157,12 @@ public class MysqlExportService {
 
                 if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
+                } else if (rs.getString(columnIndex) == null){
+                    String val = "null";
+                    val = val.replace("'", "\\'");
+                    sql.append(val).append(", ");
                 } else {
-                    String val = rs.getString(columnIndex) != null ? rs.getString(columnIndex) : "";
+                    String val = !rs.getString(columnIndex).isEmpty() ? rs.getString(columnIndex) : "";
                     val = val.replace("'", "\\'");
                     sql.append("'").append(val).append("', ");
                 }
@@ -247,7 +251,11 @@ public class MysqlExportService {
                     database, driverName);
         }
         else {
-            database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
+            if (jdbcURL.contains("?")){
+                database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1, jdbcURL.indexOf("?"));
+            } else {
+                database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
+            }
             logger.debug("database name extracted from connection string: " + database);
             connection = MysqlBaseService.connectWithURL(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
                     jdbcURL, driverName);
@@ -264,7 +272,6 @@ public class MysqlExportService {
         if(!file.exists()) {
             boolean res = file.mkdir();
             if(!res) {
-//                logger.error(LOG_PREFIX + ": Unable to create temp dir: " + file.getAbsolutePath());
                 throw new IOException(LOG_PREFIX + ": Unable to create temp dir: " + file.getAbsolutePath());
             }
         }
