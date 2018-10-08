@@ -34,6 +34,12 @@ public class MysqlImportService {
         this.tables = new ArrayList<>();
     }
 
+    /**
+     *
+     * @return bool
+     * @throws SQLException exception
+     * @throws ClassNotFoundException exception
+     */
     public boolean importDatabase() throws SQLException, ClassNotFoundException {
 
         if(!this.assertValidParams()) {
@@ -43,9 +49,8 @@ public class MysqlImportService {
             return false;
         }
 
-        //connect
-        //connect to the database
 
+        //connect to the database
         Connection connection;
         if(jdbcConnString == null || jdbcConnString.isEmpty()) {
             connection = MysqlBaseService.connect(username, password,
@@ -121,9 +126,10 @@ public class MysqlImportService {
         //now execute the batch
         long[] result = stmt.executeLargeBatch();
 
-        final String[] resultString = {""};
-        Arrays.stream(result).forEach(i -> resultString[0] = resultString[0].concat(i + " "));
-        logger.debug( result.length + " queries were executed in batch for provided SQL String with the following result : \n" + resultString[0]);
+        String resultString = Arrays.stream(result)
+                .mapToObj(String::valueOf)
+                .reduce("", (s1, s2) -> s1 + ", " + s2 + ", ");
+        logger.debug( result.length + " queries were executed in batches for provided SQL String with the following result : \n" + resultString);
 
         stmt.close();
         connection.close();
@@ -131,6 +137,11 @@ public class MysqlImportService {
         return true;
     }
 
+    /**
+     * This function will check that required parameters
+     * are set
+     * @return bool
+     */
     private boolean assertValidParams() {
         return username != null && !this.username.isEmpty() &&
                 password != null && !this.password.isEmpty() &&
@@ -138,6 +149,12 @@ public class MysqlImportService {
         ( (database != null && !this.database.isEmpty()) || (jdbcConnString != null && !jdbcConnString.isEmpty()) );
     }
 
+    /**
+     * This function will create a new
+     * MysqlImportService instance thereby facilitating
+     * a builder pattern
+     * @return MysqlImportService
+     */
     public static MysqlImportService builder() {
         return new MysqlImportService();
     }
