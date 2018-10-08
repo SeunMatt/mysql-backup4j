@@ -55,14 +55,26 @@ public class MysqlExportService {
         this.properties = properties;
     }
 
-    private boolean validateProperties() {
+    /**
+     * This function will check if the required minimum
+     * properties are set for database connection and exporting
+     * @return bool
+     */
+    private boolean isValidateProperties() {
         return properties != null &&
                 properties.containsKey(DB_USERNAME) &&
                 properties.containsKey(DB_PASSWORD) &&
                 (properties.containsKey(DB_NAME) || properties.containsKey(JDBC_CONNECTION_STRING));
     }
 
-    private boolean emailPropertiesSet() {
+    /**
+     * This function will check if all the minimum
+     * required email properties are set,
+     * that can facilitate sending of exported
+     * sql to email
+     * @return bool
+     */
+    private boolean isEmailPropertiesSet() {
         return properties != null &&
                 properties.containsKey(EMAIL_HOST) &&
                 properties.containsKey(EMAIL_PORT) &&
@@ -72,10 +84,26 @@ public class MysqlExportService {
                 properties.containsKey(EMAIL_TO);
     }
 
-    private boolean sqlFileNameProperty(){
+    /**
+     * This function will return true
+     * or false based on the availability
+     * or absence of a custom output sql
+     * file name
+     * @return bool
+     */
+    private boolean isSqlFileNamePropertySet(){
         return properties != null &&
                 properties.containsKey(SQL_FILE_NAME);
     }
+
+    /**
+     * This will generate the SQL statement
+     * for creating the table supplied in the
+     * method signature
+     * @param table the table concerned
+     * @return String
+     * @throws SQLException exception
+     */
     private String getTableInsertStatement(String table) throws SQLException {
 
         StringBuilder sql = new StringBuilder();
@@ -101,20 +129,30 @@ public class MysqlExportService {
                 }
                 sql.append(query).append(";\n\n");
             }
-        }
 
-        sql.append("\n\n--");
-        sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  table dump : ").append(table);
-        sql.append("\n--\n\n");
+            sql.append("\n\n--");
+            sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  table dump : ").append(table);
+            sql.append("\n--\n\n");
+        }
 
         return sql.toString();
     }
 
+
+    /**
+     * This function will generate the insert statements needed
+     * to recreate the table under processing.
+     * @param table the table to get inserts statement for
+     * @return String generated SQL insert
+     * @throws SQLException exception
+     */
     private String getDataInsertStatement(String table) throws SQLException {
 
         StringBuilder sql = new StringBuilder();
 
         ResultSet rs = stmt.executeQuery("SELECT * FROM `" + database + "`.`" + table + "`;");
+
+        //move to the last row to get max rows returned
         rs.last();
         int rowCount = rs.getRow();
 
@@ -143,6 +181,9 @@ public class MysqlExportService {
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
 
+        //generate the column names that are present
+        //in the returned result set
+        //at this point the insert is INSERT INTO (`col1`, `col2`, ...)
         for(int i = 0; i < columnCount; i++) {
             sql.append("`")
                     .append(metaData.getColumnName( i + 1))
@@ -152,7 +193,7 @@ public class MysqlExportService {
         //remove the last whitespace and comma
         sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1).append(") VALUES \n");
 
-        //build the values
+        //now we're going to build the values for data insertion
         rs.beforeFirst();
         while(rs.next()) {
             sql.append("(");
@@ -161,20 +202,28 @@ public class MysqlExportService {
                 int columnType = metaData.getColumnType(i + 1);
                 int columnIndex = i + 1;
 
+                //this is the part where the values are processed based on their type
                 if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
-                } else {
+                }
+                else {
+
                     String val = rs.getString(columnIndex) != null ? rs.getString(columnIndex) : "";
+
+                    //escape the single quotes that might be in the value
                     val = val.replace("'", "\\'");
+
                     sql.append("'").append(val).append("', ");
                 }
             }
 
             //now that we're done with a row
-
             //let's remove the last whitespace and comma
             sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1);
 
+            //if this is the last row, just append a closing
+            //parenthesis otherwise append a closing parenthesis and a comma
+            //for the next set of values
             if(rs.isLast()) {
                 sql.append(")");
             } else {
@@ -196,11 +245,21 @@ public class MysqlExportService {
         return sql.toString();
     }
 
+
+    /**
+     * This is the entry function that'll
+     * coordinate getTableInsertStatement() and getDataInsertStatement()
+     * for every table in the database to generate a whole
+     * script of SQL
+     * @return String
+     * @throws SQLException exception
+     */
     private String exportToSql() throws SQLException {
 
         StringBuilder sql = new StringBuilder();
         sql.append("--");
-        sql.append("\n-- Generated by java-mysql-exporter");
+        sql.append("\n-- Generated by mysql-backup4j");
+        sql.append("\n-- https://github.com/SeunMatt/mysql-backup4j");
         sql.append("\n-- Date: ").append(new SimpleDateFormat("d-M-Y H:m:s").format(new Date()));
         sql.append("\n--");
 
@@ -212,10 +271,11 @@ public class MysqlExportService {
                 .append("\n/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;");
 
 
-        //get the tables
+        //get the tables that are in the database
         List<String> tables = MysqlBaseService.getAllTables(database, stmt);
 
-        //get the table insert statement for each table
+        //for every table, get the table creation and data
+        // insert statement
         for (String s: tables) {
             try {
                 sql.append(getTableInsertStatement(s.trim()));
@@ -233,10 +293,20 @@ public class MysqlExportService {
         return sql.toString();
     }
 
+    /**
+     * This is the entry point for exporting
+     * the database. It performs validation and
+     * the initial object initializations,
+     * database connection and setup
+     * before ca
+     * @throws IOException exception
+     * @throws SQLException exception
+     * @throws ClassNotFoundException exception
+     */
     public void export() throws IOException, SQLException, ClassNotFoundException {
 
         //check if properties is set or not
-        if(!validateProperties()) {
+        if(!isValidateProperties()) {
             logger.error("Invalid config properties: The config properties is missing important parameters: DB_NAME, DB_USERNAME and DB_PASSWORD");
             return;
         }
@@ -264,7 +334,7 @@ public class MysqlExportService {
         //generate the final SQL
         String sql = exportToSql();
 
-        //create a temp dir
+        //create a temp dir to store the exported file for processing
         dirName = properties.getProperty(MysqlExportService.TEMP_DIR, dirName);
         File file = new File(dirName);
         if(!file.exists()) {
@@ -277,9 +347,14 @@ public class MysqlExportService {
 
         //write the sql file out
         File sqlFolder = new File(dirName + "/sql");
-        if(!sqlFolder.exists())
-            sqlFolder.mkdir();
-        sqlFileName = setSqlFilename();
+        if(!sqlFolder.exists()) {
+            boolean res = sqlFolder.mkdir();
+            if(!res) {
+                throw new IOException(LOG_PREFIX + ": Unable to create temp dir: " + file.getAbsolutePath());
+            }
+        }
+
+        sqlFileName = getSqlFilename();
         FileOutputStream outputStream = new FileOutputStream( sqlFolder + "/" + sqlFileName);
         outputStream.write(sql.getBytes());
         outputStream.close();
@@ -290,7 +365,7 @@ public class MysqlExportService {
         ZipUtil.pack(sqlFolder, generatedZipFile);
 
         //mail the zipped file if mail settings are available
-        if(emailPropertiesSet()) {
+        if(isEmailPropertiesSet()) {
             boolean emailSendingRes = EmailService.builder()
                     .setHost(properties.getProperty(EMAIL_HOST))
                     .setPort(Integer.valueOf(properties.getProperty(EMAIL_PORT)))
@@ -298,7 +373,7 @@ public class MysqlExportService {
                     .setFromAddress(properties.getProperty(EMAIL_FROM))
                     .setUsername(properties.getProperty(EMAIL_USERNAME))
                     .setPassword(properties.getProperty(EMAIL_PASSWORD))
-                    .setSubject(properties.getProperty(EMAIL_SUBJECT, sqlFileName.replace(".sql", "")))
+                    .setSubject(properties.getProperty(EMAIL_SUBJECT, sqlFileName.replace(".sql", "").toUpperCase()))
                     .setMessage(properties.getProperty(EMAIL_MESSAGE, "Please find attached database backup of " + database))
                     .setAttachments(new File[]{new File(zipFileName)})
                     .sendMail();
@@ -315,6 +390,13 @@ public class MysqlExportService {
 
     }
 
+    /**
+     * This function will delete all the
+     * temp files generated ny the library
+     * unless it's otherwise instructed not to do
+     * so by the preserveZipFile variable
+     * @param preserveZipFile bool
+     */
     public void clearTempFiles(boolean preserveZipFile) {
 
         //delete the temp sql file
@@ -334,6 +416,9 @@ public class MysqlExportService {
             logger.debug(LOG_PREFIX + ": " + sqlFolder.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
         }
 
+
+        //only execute this section if the
+        //file is not to be preserved
 
         if(!preserveZipFile) {
 
@@ -359,8 +444,13 @@ public class MysqlExportService {
         logger.debug(LOG_PREFIX + ": generated temp files cleared successfully");
     }
 
-    public String setSqlFilename(){
-        return sqlFileNameProperty() ? properties.getProperty(SQL_FILE_NAME) + ".sql" :
+    /**
+     * This will get the final output
+     * sql file name.
+     * @return String
+     */
+    public String getSqlFilename(){
+        return isSqlFileNamePropertySet() ? properties.getProperty(SQL_FILE_NAME) + ".sql" :
                 new SimpleDateFormat("d_M_Y_H_mm_ss").format(new Date()) + "_" + database + "_database_dump.sql";
     }
 
