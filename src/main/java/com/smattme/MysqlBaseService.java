@@ -21,12 +21,12 @@ public class MysqlBaseService {
 
     static Connection connect(String username, String password, String database, String driverName) throws ClassNotFoundException, SQLException {
         String url = "jdbc:mysql://localhost:3306/" + database;
-        String driver = (Objects.isNull(driverName) || driverName.isEmpty()) ? "com.mysql.jdbc.Driver" : driverName;
+        String driver = (Objects.isNull(driverName) || driverName.isEmpty()) ? "com.mysql.cj.jdbc.Driver" : driverName;
         return doConnect(driver, url, username, password);
     }
 
     static Connection connectWithURL(String username, String password, String jdbcURL, String driverName) throws ClassNotFoundException, SQLException {
-        String driver = (Objects.isNull(driverName) || driverName.isEmpty()) ? "com.mysql.jdbc.Driver" : driverName;
+        String driver = (Objects.isNull(driverName) || driverName.isEmpty()) ? "com.mysql.cj.jdbc.Driver" : driverName;
         return doConnect(driver, jdbcURL, username, password);
     }
 

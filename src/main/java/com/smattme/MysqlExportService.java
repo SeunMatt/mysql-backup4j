@@ -9,8 +9,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.Date;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by seun_ on 24-Feb-18.
@@ -47,6 +48,7 @@ public class MysqlExportService {
     public static final String DELETE_EXISTING_DATA = "DELETE_EXISTING_DATA";
     public static final String JDBC_CONNECTION_STRING = "JDBC_CONNECTION_STRING";
     public static final String JDBC_DRIVER_NAME = "JDBC_DRIVER_NAME";
+    public static final String SQL_FILE_NAME = "SQL_FILE_NAME";
 
 
     public MysqlExportService(Properties properties) {
@@ -62,14 +64,18 @@ public class MysqlExportService {
 
     private boolean emailPropertiesSet() {
         return properties != null &&
-               properties.containsKey(EMAIL_HOST) &&
-               properties.containsKey(EMAIL_PORT) &&
-               properties.containsKey(EMAIL_USERNAME) &&
-               properties.containsKey(EMAIL_PASSWORD) &&
-               properties.containsKey(EMAIL_FROM) &&
-               properties.containsKey(EMAIL_TO);
+                properties.containsKey(EMAIL_HOST) &&
+                properties.containsKey(EMAIL_PORT) &&
+                properties.containsKey(EMAIL_USERNAME) &&
+                properties.containsKey(EMAIL_PASSWORD) &&
+                properties.containsKey(EMAIL_FROM) &&
+                properties.containsKey(EMAIL_TO);
     }
 
+    private boolean sqlFileNameProperty(){
+        return properties != null &&
+                properties.containsKey(SQL_FILE_NAME);
+    }
     private String getTableInsertStatement(String table) throws SQLException {
 
         StringBuilder sql = new StringBuilder();
@@ -78,8 +84,8 @@ public class MysqlExportService {
         boolean dropTable = Boolean.parseBoolean(properties.containsKey(DROP_TABLES) ? properties.getProperty(DROP_TABLES, "false") : "false");
 
         if(table != null && !table.isEmpty()){
-          rs = stmt.executeQuery("SHOW CREATE TABLE `" + database + "`.`" + table + "`;");
-          while ( rs.next() ) {
+            rs = stmt.executeQuery("SHOW CREATE TABLE `" + database + "`.`" + table + "`;");
+            while ( rs.next() ) {
                 String qtbl = rs.getString(1);
                 String query = rs.getString(2);
                 sql.append("\n\n--");
@@ -94,7 +100,7 @@ public class MysqlExportService {
                     sql.append("DROP TABLE IF EXISTS `").append(database).append("`.`").append(table).append("`;\n");
                 }
                 sql.append(query).append(";\n\n");
-          }
+            }
         }
 
         sql.append("\n\n--");
@@ -138,9 +144,9 @@ public class MysqlExportService {
         int columnCount = metaData.getColumnCount();
 
         for(int i = 0; i < columnCount; i++) {
-           sql.append("`")
-                   .append(metaData.getColumnName( i + 1))
-                   .append("`, ");
+            sql.append("`")
+                    .append(metaData.getColumnName( i + 1))
+                    .append("`, ");
         }
 
         //remove the last whitespace and comma
@@ -149,7 +155,7 @@ public class MysqlExportService {
         //build the values
         rs.beforeFirst();
         while(rs.next()) {
-           sql.append("(");
+            sql.append("(");
             for(int i = 0; i < columnCount; i++) {
 
                 int columnType = metaData.getColumnType(i + 1);
@@ -170,9 +176,9 @@ public class MysqlExportService {
             sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1);
 
             if(rs.isLast()) {
-              sql.append(")");
+                sql.append(")");
             } else {
-              sql.append("),\n");
+                sql.append("),\n");
             }
         }
 
@@ -200,10 +206,10 @@ public class MysqlExportService {
 
         //these declarations are extracted from HeidiSQL
         sql.append("\n\n/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;")
-        .append("\n/*!40101 SET NAMES utf8 */;")
-        .append("\n/*!50503 SET NAMES utf8mb4 */;")
-        .append("\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;")
-        .append("\n/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;");
+                .append("\n/*!40101 SET NAMES utf8 */;")
+                .append("\n/*!50503 SET NAMES utf8mb4 */;")
+                .append("\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;")
+                .append("\n/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;");
 
 
         //get the tables
@@ -219,9 +225,9 @@ public class MysqlExportService {
             }
         }
 
-       sql.append("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;")
-        .append("\n/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;")
-        .append("\n/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;");
+        sql.append("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;")
+                .append("\n/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;")
+                .append("\n/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;");
 
         this.generatedSql = sql.toString();
         return sql.toString();
@@ -273,7 +279,7 @@ public class MysqlExportService {
         File sqlFolder = new File(dirName + "/sql");
         if(!sqlFolder.exists())
             sqlFolder.mkdir();
-        sqlFileName = new SimpleDateFormat("d_M_Y_H_mm_ss").format(new Date()) + "_" + database + "_database_dump.sql";
+        sqlFileName = setSqlFilename();
         FileOutputStream outputStream = new FileOutputStream( sqlFolder + "/" + sqlFileName);
         outputStream.write(sql.getBytes());
         outputStream.close();
@@ -305,7 +311,7 @@ public class MysqlExportService {
         }
 
         //clear the generated temp files
-         clearTempFiles(Boolean.parseBoolean(properties.getProperty(PRESERVE_GENERATED_ZIP, Boolean.FALSE.toString())));
+        clearTempFiles(Boolean.parseBoolean(properties.getProperty(PRESERVE_GENERATED_ZIP, Boolean.FALSE.toString())));
 
     }
 
@@ -329,28 +335,37 @@ public class MysqlExportService {
         }
 
 
-       if(!preserveZipFile) {
+        if(!preserveZipFile) {
 
-           //delete the zipFile
-           File zipFile = new File(zipFileName);
-           if (zipFile.exists()) {
-               boolean res = zipFile.delete();
-               logger.debug(LOG_PREFIX + ": " + zipFile.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
-           } else {
-               logger.debug(LOG_PREFIX + ": " + zipFile.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
-           }
+            //delete the zipFile
+            File zipFile = new File(zipFileName);
+            if (zipFile.exists()) {
+                boolean res = zipFile.delete();
+                logger.debug(LOG_PREFIX + ": " + zipFile.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
+            } else {
+                logger.debug(LOG_PREFIX + ": " + zipFile.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
+            }
 
-           //delete the temp folder
-           File folder = new File(dirName);
-           if (folder.exists()) {
-               boolean res = folder.delete();
-               logger.debug(LOG_PREFIX + ": " + folder.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
-           } else {
-               logger.debug(LOG_PREFIX + ": " + folder.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
-           }
-       }
+            //delete the temp folder
+            File folder = new File(dirName);
+            if (folder.exists()) {
+                boolean res = folder.delete();
+                logger.debug(LOG_PREFIX + ": " + folder.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
+            } else {
+                logger.debug(LOG_PREFIX + ": " + folder.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
+            }
+        }
 
         logger.debug(LOG_PREFIX + ": generated temp files cleared successfully");
+    }
+
+    public String setSqlFilename(){
+        return sqlFileNameProperty() ? properties.getProperty(SQL_FILE_NAME) + ".sql" :
+                new SimpleDateFormat("d_M_Y_H_mm_ss").format(new Date()) + "_" + database + "_database_dump.sql";
+    }
+
+    public String getSqlFileName() {
+        return sqlFileName;
     }
 
     public String getGeneratedSql() {
