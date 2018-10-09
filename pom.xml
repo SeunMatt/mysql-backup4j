@@ -6,7 +6,7 @@
 
     <groupId>com.smattme</groupId>
     <artifactId>mysql-backup4j</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>LATEST</version>
+            <version>8.0.12</version>
         </dependency>
         <dependency>
             <groupId>org.zeroturnaround</groupId>

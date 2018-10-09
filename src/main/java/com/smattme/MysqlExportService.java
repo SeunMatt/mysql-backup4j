@@ -47,6 +47,7 @@ public class MysqlExportService {
     public static final String DELETE_EXISTING_DATA = "DELETE_EXISTING_DATA";
     public static final String JDBC_CONNECTION_STRING = "JDBC_CONNECTION_STRING";
     public static final String JDBC_DRIVER_NAME = "JDBC_DRIVER_NAME";
+    public static final String SQL_FILE_NAME = "SQL_FILE_NAME";
 
 
     public MysqlExportService(Properties properties) {
@@ -68,6 +69,11 @@ public class MysqlExportService {
                properties.containsKey(EMAIL_PASSWORD) &&
                properties.containsKey(EMAIL_FROM) &&
                properties.containsKey(EMAIL_TO);
+    }
+
+    private boolean sqlFileNameProperty(){
+        return properties != null &&
+                properties.containsKey(SQL_FILE_NAME);
     }
 
     private String getTableInsertStatement(String table) throws SQLException {
@@ -280,7 +286,7 @@ public class MysqlExportService {
         File sqlFolder = new File(dirName + "/sql");
         if(!sqlFolder.exists())
             sqlFolder.mkdir();
-        sqlFileName = new SimpleDateFormat("d_M_Y_H_mm_ss").format(new Date()) + "_" + database + "_database_dump.sql";
+        sqlFileName = setSqlFilename();
         FileOutputStream outputStream = new FileOutputStream( sqlFolder + "/" + sqlFileName);
         outputStream.write(sql.getBytes());
         outputStream.close();
@@ -358,6 +364,15 @@ public class MysqlExportService {
        }
 
         logger.debug(LOG_PREFIX + ": generated temp files cleared successfully");
+    }
+
+    public String setSqlFilename(){
+        return sqlFileNameProperty() ? properties.getProperty(SQL_FILE_NAME) + ".sql" :
+                new SimpleDateFormat("d_M_Y_H_mm_ss").format(new Date()) + "_" + database + "_database_dump.sql";
+    }
+
+    public String getSqlFileName() {
+        return sqlFileName;
     }
 
     public String getGeneratedSql() {
