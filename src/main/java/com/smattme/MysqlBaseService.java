@@ -103,8 +103,16 @@ public class MysqlBaseService {
      * @return String sql to delete the all records from the table
      */
     static String getEmptyTableSQL(String database, String table) {
+        String safeDeleteSQL = "SELECT IF( \n" +
+                 "(SELECT COUNT(1) as table_exists FROM information_schema.tables \n" +
+                    "WHERE table_schema='" + database + "' AND table_name='" + table + "') > 1, \n" +
+                 "'DELETE FROM " + table + "', \n" +
+                 "'SELECT 1') INTO @DeleteSQL; \n" +
+                "PREPARE stmt FROM @DeleteSQL; \n" +
+                "EXECUTE stmt; DEALLOCATE PREPARE stmt; \n";
+
         return  "\n" + MysqlBaseService.SQL_START_PATTERN + "\n" +
-                "DELETE FROM `" + database + "`.`" + table + "`;\n" +
+                    safeDeleteSQL + "\n" +
                 "\n" + MysqlBaseService.SQL_END_PATTERN + "\n";
     }
 

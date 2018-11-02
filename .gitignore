@@ -2,3 +2,4 @@
 /src/test/java/com/smattme/MysqlExportServiceUnitTest.java
 /target/
 /.idea/
+.DS_Store

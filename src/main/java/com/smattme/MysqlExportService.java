@@ -11,6 +11,7 @@ import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -44,8 +45,24 @@ public class MysqlExportService {
     public static final String PRESERVE_GENERATED_ZIP = "PRESERVE_GENERATED_ZIP";
     public static final String TEMP_DIR = "TEMP_DIR";
     public static final String ADD_IF_NOT_EXISTS = "ADD_IF_NOT_EXISTS";
+
+
+    /**
+     * @deprecated
+     * This is deprecated in favour of the same option available
+     * in the {@link MysqlImportService} class.
+     */
     public static final String DROP_TABLES = "DROP_TABLES";
+
+
+    /**
+     * @deprecated
+     * This is deprecated in favour of the same option available
+     * in the {@link MysqlImportService} class.
+     */
     public static final String DELETE_EXISTING_DATA = "DELETE_EXISTING_DATA";
+
+
     public static final String JDBC_CONNECTION_STRING = "JDBC_CONNECTION_STRING";
     public static final String JDBC_DRIVER_NAME = "JDBC_DRIVER_NAME";
     public static final String SQL_FILE_NAME = "SQL_FILE_NAME";
@@ -109,10 +126,10 @@ public class MysqlExportService {
         StringBuilder sql = new StringBuilder();
         ResultSet rs;
         boolean addIfNotExists = Boolean.parseBoolean(properties.containsKey(ADD_IF_NOT_EXISTS) ? properties.getProperty(ADD_IF_NOT_EXISTS, "true") : "true");
-        boolean dropTable = Boolean.parseBoolean(properties.containsKey(DROP_TABLES) ? properties.getProperty(DROP_TABLES, "false") : "false");
+
 
         if(table != null && !table.isEmpty()){
-            rs = stmt.executeQuery("SHOW CREATE TABLE `" + database + "`.`" + table + "`;");
+            rs = stmt.executeQuery("SHOW CREATE TABLE " + "`" + table + "`;");
             while ( rs.next() ) {
                 String qtbl = rs.getString(1);
                 String query = rs.getString(2);
@@ -121,12 +138,9 @@ public class MysqlExportService {
                 sql.append("\n--\n\n");
 
                 if(addIfNotExists) {
-                    query = query.trim().replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS ");
+                    query = query.trim().replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
                 }
 
-                if(dropTable) {
-                    sql.append("DROP TABLE IF EXISTS `").append(database).append("`.`").append(table).append("`;\n");
-                }
                 sql.append(query).append(";\n\n");
             }
 
@@ -150,7 +164,7 @@ public class MysqlExportService {
 
         StringBuilder sql = new StringBuilder();
 
-        ResultSet rs = stmt.executeQuery("SELECT * FROM `" + database + "`.`" + table + "`;");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM " + "`" + table + "`;");
 
         //move to the last row to get max rows returned
         rs.last();
@@ -165,12 +179,6 @@ public class MysqlExportService {
 
         //temporarily disable foreign key constraint
         sql.append("\n/*!40000 ALTER TABLE `").append(table).append("` DISABLE KEYS */;\n");
-
-        boolean deleteExistingData = Boolean.parseBoolean(properties.containsKey(DELETE_EXISTING_DATA) ? properties.getProperty(DELETE_EXISTING_DATA, "false") : "false");
-
-        if(deleteExistingData) {
-            sql.append(MysqlBaseService.getEmptyTableSQL(database, table));
-        }
 
         sql.append("\n--\n")
                 .append(MysqlBaseService.SQL_START_PATTERN).append(" table insert : ").append(table)
@@ -203,14 +211,16 @@ public class MysqlExportService {
                 int columnIndex = i + 1;
 
                 //this is the part where the values are processed based on their type
-                if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
+                if(Objects.isNull(rs.getObject(columnIndex))) {
+                    sql.append("").append(rs.getObject(columnIndex)).append(", ");
+                }
+                else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
                 }
                 else {
 
-                    String val = rs.getString(columnIndex) != null ? rs.getString(columnIndex) : "";
-
-                    //escape the single quotes that might be in the value
+                    String val = rs.getString(columnIndex);
+                   //escape the single quotes that might be in the value
                     val = val.replace("'", "\\'");
 
                     sql.append("'").append(val).append("', ");

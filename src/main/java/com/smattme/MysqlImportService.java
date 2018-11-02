@@ -65,20 +65,11 @@ public class MysqlImportService {
 
         Statement stmt = connection.createStatement();
 
-        //disable foreign key check
-        stmt.addBatch("SET FOREIGN_KEY_CHECKS = 0");
-
-
          if(deleteExisting || dropExisting) {
 
-             if(deleteExisting)
-                logger.debug("deleteExisting flag is set to TRUE! I believe you know what you're doing");
-
-             if(dropExisting)
-                 logger.debug("dropExisting flag is set to TRUE! This will drop any existing table(s) in the database");
-
-            //get all the tables
+            //get all the tables, so as to eliminate delete errors due to non-existent tables
             tables = MysqlBaseService.getAllTables(database, stmt);
+            logger.debug("tables found for deleting/dropping: \n" + tables.toString());
 
              //execute delete query
             for (String table: tables) {
@@ -86,21 +77,24 @@ public class MysqlImportService {
                 //if deleteExisting and dropExisting is true
                 //skip the deleteExisting query
                 //dropExisting will take care of both
-
                 if(deleteExisting && !dropExisting) {
-                    String delQ = "DELETE FROM `" + database + "`.`" + table + "`";
+                    String delQ = "DELETE FROM " + "`" + table + "`;";
                     logger.debug("adding " + delQ + " to batch");
                     stmt.addBatch(delQ);
                 }
 
                 if(dropExisting) {
-                    String dropQ = "DROP TABLE `" + database + "`.`" + table + "`";
+                    String dropQ = "DROP TABLE IF EXISTS " + "`" + table + "`";
                     logger.debug("adding " + dropQ + " to batch");
                     stmt.addBatch(dropQ);
                 }
 
             }
         }
+
+        //disable foreign key check
+        stmt.addBatch("SET FOREIGN_KEY_CHECKS = 0");
+
 
         //now process the sql string supplied
         while (sqlString.contains(MysqlBaseService.SQL_START_PATTERN)) {
