@@ -33,7 +33,7 @@ public class MysqlBaseService {
      * @throws SQLException exception
      */
     static Connection connect(String username, String password, String database, String driverName) throws ClassNotFoundException, SQLException {
-        String url = "jdbc:mysql://localhost:3306/" + database;
+        String url = "jdbc:mysql://localhost:3306/" + database + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false";
         String driver = (Objects.isNull(driverName) || driverName.isEmpty()) ? "com.mysql.cj.jdbc.Driver" : driverName;
         return doConnect(driver, url, username, password);
     }
@@ -44,7 +44,7 @@ public class MysqlBaseService {
      * The connector driver name can be empty
      * @param username database username
      * @param password database password
-     * @param jdbcURL the user supplied JDBC URL
+     * @param jdbcURL the user supplied JDBC URL. It's used as is. So ensure you supply the right parameters
      * @param driverName the user supplied mysql connector driver class name
      * @return Connection
      * @throws ClassNotFoundException exception
@@ -69,7 +69,6 @@ public class MysqlBaseService {
      */
     private static Connection doConnect(String driver, String url, String username, String password) throws SQLException, ClassNotFoundException {
         Class.forName(driver);
-        url = url.concat("?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC");
         Connection connection = DriverManager.getConnection(url, username, password);
         logger.debug("DB Connected Successfully");
         return  connection;

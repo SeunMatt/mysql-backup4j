@@ -333,7 +333,11 @@ public class MysqlExportService {
                     database, driverName);
         }
         else {
-            database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
+            if (jdbcURL.contains("?")){
+                database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1, jdbcURL.indexOf("?"));
+            } else {
+                database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
+            }
             logger.debug("database name extracted from connection string: " + database);
             connection = MysqlBaseService.connectWithURL(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
                     jdbcURL, driverName);
