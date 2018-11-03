@@ -32,6 +32,11 @@ class EmailService {
 
     private EmailService() {}
 
+    /**
+     * This is used to instantiate this class and form a
+     * builder pattern
+     * @return EmailService a new instance of this class
+     */
     static EmailService builder() {
         return new EmailService();
     }
@@ -81,6 +86,11 @@ class EmailService {
         return this;
     }
 
+    /**
+     * This will check if the necessary properties
+     * are set for sending an email successfully
+     * @return boolean
+     */
     private boolean isPropertiesSet() {
         return !this.host.isEmpty() &&
                 this.port > 0 &&
@@ -94,6 +104,11 @@ class EmailService {
     }
 
 
+    /**
+     * This function will send an email
+     * and add the generated sql file as an attachment
+     * @return boolean
+     */
     boolean sendMail() {
 
         if(!this.isPropertiesSet()) {

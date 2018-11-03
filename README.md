@@ -17,7 +17,7 @@ The artifact is available on Maven Central and can be added to the project's pom
 <dependency>
     <groupId>com.smattme</groupId>
     <artifactId>mysql-backup4j</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -87,12 +87,9 @@ String generatedSql = mysqlExportService.getGeneratedSql();
 Other parameters are:
 
 ```java
-properties.setProperty(MysqlExportService.DELETE_EXISTING_DATA, "true");
-properties.setProperty(MysqlExportService.DROP_TABLES, "true");
 properties.setProperty(MysqlExportService.ADD_IF_NOT_EXISTS, "true");
 properties.setProperty(MysqlExportService.JDBC_DRIVER_NAME, "root.ss");
 properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, "jdbc:mysql://localhost:3306/database-name");
-properties.setProperty(MysqlExportService.SQL_FILE_NAME, "custom name for the sql zip/file");
 ```
 
 They are explained in a detailed manner in this [tutorial](https://smattme.com/blog/technology/how-to-backup-mysql-database-programmatically-using-mysql-backup4j)

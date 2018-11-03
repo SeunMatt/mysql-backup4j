@@ -34,6 +34,12 @@ public class MysqlImportService {
         this.tables = new ArrayList<>();
     }
 
+    /**
+     *
+     * @return bool
+     * @throws SQLException exception
+     * @throws ClassNotFoundException exception
+     */
     public boolean importDatabase() throws SQLException, ClassNotFoundException {
 
         if(!this.assertValidParams()) {
@@ -43,20 +49,21 @@ public class MysqlImportService {
             return false;
         }
 
-        //connect
-        //connect to the database
 
+        //connect to the database
         Connection connection;
         if(jdbcConnString == null || jdbcConnString.isEmpty()) {
             connection = MysqlBaseService.connect(username, password,
                     database, jdbcDriver);
         }
         else {
+
             if (jdbcConnString.contains("?")){
                 database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1, jdbcConnString.indexOf("?"));
             } else {
                 database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1);
             }
+
             logger.debug("database name extracted from connection string: " + database);
             connection = MysqlBaseService.connectWithURL(username, password,
                     jdbcConnString, jdbcDriver);
@@ -64,20 +71,11 @@ public class MysqlImportService {
 
         Statement stmt = connection.createStatement();
 
-        //disable foreign key check
-        stmt.addBatch("SET FOREIGN_KEY_CHECKS = 0");
-
-
          if(deleteExisting || dropExisting) {
 
-             if(deleteExisting)
-                logger.debug("deleteExisting flag is set to TRUE! I believe you know what you're doing");
-
-             if(dropExisting)
-                 logger.debug("dropExisting flag is set to TRUE! This will drop any existing table(s) in the database");
-
-            //get all the tables
+            //get all the tables, so as to eliminate delete errors due to non-existent tables
             tables = MysqlBaseService.getAllTables(database, stmt);
+            logger.debug("tables found for deleting/dropping: \n" + tables.toString());
 
              //execute delete query
             for (String table: tables) {
@@ -85,21 +83,24 @@ public class MysqlImportService {
                 //if deleteExisting and dropExisting is true
                 //skip the deleteExisting query
                 //dropExisting will take care of both
-
                 if(deleteExisting && !dropExisting) {
-                    String delQ = "DELETE FROM `" + database + "`.`" + table + "`";
+                    String delQ = "DELETE FROM " + "`" + table + "`;";
                     logger.debug("adding " + delQ + " to batch");
                     stmt.addBatch(delQ);
                 }
 
                 if(dropExisting) {
-                    String dropQ = "DROP TABLE `" + database + "`.`" + table + "`";
+                    String dropQ = "DROP TABLE IF EXISTS " + "`" + table + "`";
                     logger.debug("adding " + dropQ + " to batch");
                     stmt.addBatch(dropQ);
                 }
 
             }
         }
+
+        //disable foreign key check
+        stmt.addBatch("SET FOREIGN_KEY_CHECKS = 0");
+
 
         //now process the sql string supplied
         while (sqlString.contains(MysqlBaseService.SQL_START_PATTERN)) {
@@ -125,9 +126,10 @@ public class MysqlImportService {
         //now execute the batch
         long[] result = stmt.executeLargeBatch();
 
-        final String[] resultString = {""};
-        Arrays.stream(result).forEach(i -> resultString[0] = resultString[0].concat(i + " "));
-        logger.debug( result.length + " queries were executed in batch for provided SQL String with the following result : \n" + resultString[0]);
+        String resultString = Arrays.stream(result)
+                .mapToObj(String::valueOf)
+                .reduce("", (s1, s2) -> s1 + ", " + s2 + ", ");
+        logger.debug( result.length + " queries were executed in batches for provided SQL String with the following result : \n" + resultString);
 
         stmt.close();
         connection.close();
@@ -135,6 +137,11 @@ public class MysqlImportService {
         return true;
     }
 
+    /**
+     * This function will check that required parameters
+     * are set
+     * @return bool
+     */
     private boolean assertValidParams() {
         return username != null && !this.username.isEmpty() &&
                 password != null && !this.password.isEmpty() &&
@@ -142,6 +149,12 @@ public class MysqlImportService {
         ( (database != null && !this.database.isEmpty()) || (jdbcConnString != null && !jdbcConnString.isEmpty()) );
     }
 
+    /**
+     * This function will create a new
+     * MysqlImportService instance thereby facilitating
+     * a builder pattern
+     * @return MysqlImportService
+     */
     public static MysqlImportService builder() {
         return new MysqlImportService();
     }
