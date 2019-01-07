@@ -290,7 +290,6 @@ public class MysqlExportService {
             try {
                 sql.append(getTableInsertStatement(s.trim()));
                 if (isTable(s.trim())) 
-                	System.out.println("IsTable");
                 	sql.append(getDataInsertStatement(s.trim()));
             } catch (SQLException e) {
                 e.printStackTrace();
