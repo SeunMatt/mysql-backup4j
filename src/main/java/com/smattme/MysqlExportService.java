@@ -289,7 +289,6 @@ public class MysqlExportService {
         for (String s: tables) {
             try {
                 sql.append(getTableInsertStatement(s.trim()));
-                System.err.println(s.trim());
                 if (isTable(s.trim())) 
                 	System.out.println("IsTable");
                 	sql.append(getDataInsertStatement(s.trim()));
