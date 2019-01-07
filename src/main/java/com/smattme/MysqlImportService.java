@@ -1,15 +1,14 @@
 package com.smattme;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by seun_ on 01-Mar-18.
@@ -90,7 +89,11 @@ public class MysqlImportService {
                 }
 
                 if(dropExisting) {
-                    String dropQ = "DROP TABLE IF EXISTS " + "`" + table + "`";
+                	String dropQ = "DROP TABLE IF EXISTS " + "`" + table + "`";
+                    logger.debug("adding " + dropQ + " to batch");
+                    stmt.addBatch(dropQ);
+                    
+                    dropQ = "DROP VIEW IF EXISTS " + "`" + table + "`";
                     logger.debug("adding " + dropQ + " to batch");
                     stmt.addBatch(dropQ);
                 }
