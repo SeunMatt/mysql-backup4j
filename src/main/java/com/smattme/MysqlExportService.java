@@ -304,6 +304,13 @@ public class MysqlExportService {
         return sql.toString();
     }
     
+    /**
+     * Return true is table is a table. Return false if table is NOT a table, but a View
+     * 
+     * @param table Name of the table in the database
+     * @return boolean
+     * @throws SQLException
+     */
     private boolean isTable(String table) throws SQLException{
     	ResultSet rs;
 
