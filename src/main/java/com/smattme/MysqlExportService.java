@@ -289,7 +289,10 @@ public class MysqlExportService {
         for (String s: tables) {
             try {
                 sql.append(getTableInsertStatement(s.trim()));
-                sql.append(getDataInsertStatement(s.trim()));
+                System.err.println(s.trim());
+                if (isTable(s.trim())) 
+                	System.out.println("IsTable");
+                	sql.append(getDataInsertStatement(s.trim()));
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -301,6 +304,20 @@ public class MysqlExportService {
 
         this.generatedSql = sql.toString();
         return sql.toString();
+    }
+    
+    private boolean isTable(String table) throws SQLException{
+    	ResultSet rs;
+
+        if(table == null || table.isEmpty()) return false;
+        
+        rs = stmt.executeQuery("SHOW CREATE TABLE " + "`" + table + "`;");
+        while ( rs.next() ) {
+        	String query = rs.getString(2);
+        	if (!query.startsWith("CREATE TABLE")) return false;
+        }
+        
+        return true;
     }
 
     /**
