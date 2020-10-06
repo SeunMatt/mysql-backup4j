@@ -379,6 +379,12 @@ public class MysqlExportService {
         //generate the final SQL
         String sql = exportToSql();
 
+        //close the statement
+        stmt.close();
+
+        //close the connection
+        connection.close();
+
         //create a temp dir to store the exported file for processing
         dirName = properties.getProperty(MysqlExportService.TEMP_DIR, dirName);
         File file = new File(dirName);
