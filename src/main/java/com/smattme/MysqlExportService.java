@@ -1,5 +1,6 @@
 package com.smattme;
 
+import static java.util.Objects.isNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ZipUtil;
@@ -303,6 +304,35 @@ public class MysqlExportService {
         return sql.toString();
     }
 
+
+    /**
+     * Returns the last index of the character '/' that is <i>directly</i> before the
+     * character '?'.
+     * <p>
+     * Consider a url <code>jdbc:mysql://localhost:3306/db_name?serverTimezone=Europe/Athens&characterEncoding=UTF-8</code>.<br>
+     * If we just call <code>lastIndexOf('/')</code> we get an index greater than the index of '?'.
+     *
+     * @param jdbcURL the database url. Connot be empty or null
+     * @return the index of '/' that is directly before the '?'
+     * @throws RuntimeException if jdbcURL is null or empty, or does not contain a '?' char
+     */
+    private int getSlashBeforeDbNameIndex(String jdbcURL) {
+        if(isNull(jdbcURL) || jdbcURL.isEmpty()) {
+            throw new RuntimeException("url cannot be null nor empty");
+        }
+        int questionMark = jdbcURL.indexOf('?');
+        if(questionMark == -1) {
+            throw new RuntimeException("'?' not found in url");
+        }
+        int slash = jdbcURL.indexOf('/');
+        int oldSlash = slash;
+        while(slash > 0 && slash < questionMark) {
+            oldSlash = slash;
+            slash = jdbcURL.indexOf('/', oldSlash + 1);
+        }
+        return oldSlash;
+    }
+
     /**
      * This is the entry point for exporting
      * the database. It performs validation and
@@ -334,6 +364,7 @@ public class MysqlExportService {
         }
         else {
             if (jdbcURL.contains("?")){
+                int slashBeforeDbNameIndex = getSlashBeforeDbNameIndex(jdbcURL);
                 database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1, jdbcURL.indexOf("?"));
             } else {
                 database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
