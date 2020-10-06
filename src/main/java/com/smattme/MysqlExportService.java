@@ -374,7 +374,7 @@ public class MysqlExportService {
                     jdbcURL, driverName);
         }
 
-        stmt = connection.createStatement();
+        stmt = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         //generate the final SQL
         String sql = exportToSql();
