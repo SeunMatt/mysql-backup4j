@@ -1,5 +1,10 @@
 language: java
 jdk:
   - openjdk8
+services: mysql
+before_install:
+  - mysql -e 'CREATE DATABASE mysqlbackup4j_test;'
+  - mysql -e 'CREATE DATABASE mysqlbackup4j_restored;'
+  - mysql -e 'SHOW DATABASES;'
 install:
-  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true -B
+  - mvn install -Dmaven.javadoc.skip=true -Dgpg.skip=true -B

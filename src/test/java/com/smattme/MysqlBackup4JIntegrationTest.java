@@ -23,6 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MysqlBackup4JIntegrationTest {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String TEST_DB = "mysqlbackup4j_test";
+    private static final String RESTORED_DB = "mysqlbackup4j_restored";
+    private static final String DB_USERNAME = "travis";
+    private static final String DB_PASSWORD = "";
 
     @BeforeEach
     void setUp() {
@@ -33,9 +37,9 @@ class MysqlBackup4JIntegrationTest {
     void givenDBCredentials_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws SQLException, ClassNotFoundException, IOException {
 
         Properties properties = new Properties();
-        properties.setProperty(MysqlExportService.DB_NAME, "mnetsms_db");
-        properties.setProperty(MysqlExportService.DB_USERNAME, "root");
-        properties.setProperty(MysqlExportService.DB_PASSWORD, "root");
+        properties.setProperty(MysqlExportService.DB_NAME, TEST_DB);
+        properties.setProperty(MysqlExportService.DB_USERNAME, DB_USERNAME);
+        properties.setProperty(MysqlExportService.DB_PASSWORD, DB_PASSWORD);
 
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_ZIP, "true");
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_SQL_FILE, "true");
@@ -62,10 +66,10 @@ class MysqlBackup4JIntegrationTest {
 
         MysqlImportService res = MysqlImportService.builder()
                 .setJdbcDriver("com.mysql.cj.jdbc.Driver")
-                .setDatabase("backup4j_test")
+                .setDatabase(RESTORED_DB)
                 .setSqlString(sql)
-                .setUsername("root")
-                .setPassword("root")
+                .setUsername(DB_USERNAME)
+                .setPassword(DB_PASSWORD)
                 .setDeleteExisting(true)
                 .setDropExisting(true);
 
@@ -77,9 +81,9 @@ class MysqlBackup4JIntegrationTest {
     void givenJDBCConString_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws SQLException, ClassNotFoundException, IOException {
 
         Properties properties = new Properties();
-        properties.setProperty(MysqlExportService.DB_USERNAME, "root");
-        properties.setProperty(MysqlExportService.DB_PASSWORD, "root");
-        properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, "jdbc:mysql://localhost:3306/mnetsms_db?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false");
+        properties.setProperty(MysqlExportService.DB_USERNAME, DB_USERNAME);
+        properties.setProperty(MysqlExportService.DB_PASSWORD, DB_PASSWORD);
+        properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, "jdbc:mysql://localhost:3306/" + TEST_DB + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false");
 
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_ZIP, "true");
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_SQL_FILE, "true");
@@ -103,9 +107,9 @@ class MysqlBackup4JIntegrationTest {
         String sql = new String(Files.readAllBytes(Paths.get("external/sql/test_output_file_name.sql")));
         boolean res = MysqlImportService.builder()
                 .setSqlString(sql)
-                .setJdbcConnString("jdbc:mysql://localhost:3306/backup4j_test?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
-                .setUsername("root")
-                .setPassword("root")
+                .setJdbcConnString("jdbc:mysql://localhost:3306/" + RESTORED_DB + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
+                .setUsername(DB_USERNAME)
+                .setPassword(DB_PASSWORD)
                 .setDeleteExisting(true)
                 .setDropExisting(true)
                 .importDatabase();
