@@ -62,7 +62,7 @@ class MysqlBackup4JIntegrationTest {
         assertNotNull(file);
         logger.info("Generated Filename: " + file.getAbsolutePath());
 
-        String sql = new String(Files.readAllBytes(Paths.get("external/sql/test_output_file_name.sql")));
+        String sql = new String(Files.readAllBytes(new File("external/sql/test_output_file_name.sql").toPath()));
 
         MysqlImportService res = MysqlImportService.builder()
                 .setJdbcDriver("com.mysql.cj.jdbc.Driver")
