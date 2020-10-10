@@ -53,8 +53,7 @@ public class MysqlImportService {
         //connect to the database
         Connection connection;
         if(jdbcConnString == null || jdbcConnString.isEmpty()) {
-            connection = MysqlBaseService.connect(username, password,
-                    database, jdbcDriver);
+            connection = MysqlBaseService.connect(username, password, database, jdbcDriver);
         }
         else {
 
@@ -65,8 +64,7 @@ public class MysqlImportService {
             }
 
             logger.debug("database name extracted from connection string: " + database);
-            connection = MysqlBaseService.connectWithURL(username, password,
-                    jdbcConnString, jdbcDriver);
+            connection = MysqlBaseService.connectWithURL(username, password, jdbcConnString, jdbcDriver);
         }
 
         Statement stmt = connection.createStatement();
@@ -74,10 +72,12 @@ public class MysqlImportService {
          if(deleteExisting || dropExisting) {
 
             //get all the tables, so as to eliminate delete errors due to non-existent tables
-            tables = MysqlBaseService.getAllTables(database, stmt);
-            logger.debug("tables found for deleting/dropping: \n" + tables.toString());
+             TablesResponse allTablesAndViews = MysqlBaseService.getAllTablesAndViews(database, stmt);
+             tables = allTablesAndViews.getTables();
+             logger.debug("tables found for deleting/dropping: \n" + tables.toString());
 
-             //execute delete query
+
+             //execute delete query for tables
             for (String table: tables) {
 
                 //if deleteExisting and dropExisting is true
@@ -96,6 +96,18 @@ public class MysqlImportService {
                 }
 
             }
+
+
+             List<String> views = allTablesAndViews.getViews();
+             //execute delete query for views
+            for (String view: views) {
+                if(dropExisting) {
+                    String dropQ = "DROP VIEW IF EXISTS " + "`" + view + "`";
+                    logger.debug("adding " + dropQ + " to batch");
+                    stmt.addBatch(dropQ);
+                }
+            }
+
         }
 
         //disable foreign key check
@@ -109,7 +121,7 @@ public class MysqlImportService {
             int startIndex = sqlString.indexOf(MysqlBaseService.SQL_START_PATTERN);
             int endIndex = sqlString.indexOf(MysqlBaseService.SQL_END_PATTERN);
 
-            String executable = sqlString.substring(startIndex, endIndex);
+            String executable = sqlString.substring(startIndex, endIndex).trim();
             logger.debug("adding extracted executable SQL chunk to batch : \n" + executable);
             stmt.addBatch(executable);
 
@@ -126,10 +138,8 @@ public class MysqlImportService {
         //now execute the batch
         long[] result = stmt.executeLargeBatch();
 
-        String resultString = Arrays.stream(result)
-                .mapToObj(String::valueOf)
-                .reduce("", (s1, s2) -> s1 + ", " + s2 + ", ");
-        logger.debug( result.length + " queries were executed in batches for provided SQL String with the following result : \n" + resultString);
+        if(logger.isDebugEnabled())
+            logger.debug( result.length + " queries were executed in batches for provided SQL String with the following result : \n" + Arrays.toString(result));
 
         stmt.close();
         connection.close();

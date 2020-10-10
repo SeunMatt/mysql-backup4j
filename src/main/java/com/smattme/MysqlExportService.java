@@ -154,6 +154,39 @@ public class MysqlExportService {
         return sql.toString();
     }
 
+    /**
+     * this will generate the SQL statement to re-create
+     * the supplied view
+     * @param view the name of the View
+     * @return an SQL to create the view
+     * @throws SQLException on error
+     */
+    private String getCreateViewStatement(String view) throws SQLException {
+
+        StringBuilder sql = new StringBuilder();
+        ResultSet rs;
+
+        if(view != null && !view.isEmpty()) {
+            rs = stmt.executeQuery("SHOW CREATE VIEW " + "`" + view + "`;");
+            while ( rs.next() ) {
+                String viewName = rs.getString(1);
+                String viewQuery = rs.getString(2);
+                sql.append("\n\n--");
+                sql.append("\n").append(MysqlBaseService.SQL_START_PATTERN).append("  view dump : ").append(view);
+                sql.append("\n--\n\n");
+
+                String finalQuery = "CREATE OR REPLACE VIEW `" + viewName + "` " + (viewQuery.substring(viewQuery.indexOf("AS")).trim());
+                sql.append(finalQuery).append(";\n\n");
+            }
+
+            sql.append("\n\n--");
+            sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  view dump : ").append(view);
+            sql.append("\n--\n\n");
+        }
+
+        return sql.toString();
+    }
+
 
     /**
      * This function will generate the insert statements needed
@@ -284,8 +317,10 @@ public class MysqlExportService {
 
 
         //get the tables that are in the database
-        List<String> tables = MysqlBaseService.getAllTables(database, stmt);
+//        List<String> tables = MysqlBaseService.getAllTables(database, stmt);
+        TablesResponse allTablesAndViews = MysqlBaseService.getAllTablesAndViews(database, stmt);
 
+        List<String> tables = allTablesAndViews.getTables();
         //for every table, get the table creation and data
         // insert statement
         for (String s: tables) {
@@ -293,7 +328,18 @@ public class MysqlExportService {
                 sql.append(getTableInsertStatement(s.trim()));
                 sql.append(getDataInsertStatement(s.trim()));
             } catch (SQLException e) {
-                e.printStackTrace();
+                logger.error("Exception occurred while processing table: " + s, e);
+            }
+        }
+
+
+        //process views if there's any
+        List<String> views = allTablesAndViews.getViews();
+        for (String v: views) {
+            try {
+                sql.append(getCreateViewStatement(v.trim()));
+            } catch (SQLException e) {
+                logger.error("Exception occurred while processing view: " + v, e);
             }
         }
 
@@ -488,7 +534,7 @@ public class MysqlExportService {
     }
 
     /**
-     * this is a getter for the {@link generatedZipFile} generatedZipFile File object
+     * this is a getter for the generatedZipFile generatedZipFile File object
      * The reference can be used for further processing in
      * external systems
      * @return generatedZipFile or null
