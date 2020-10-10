@@ -5,7 +5,6 @@ services: mysql
 before_install:
   - mysql -e 'CREATE DATABASE mysqlbackup4j_test;'
   - mysql -e 'CREATE DATABASE mysqlbackup4j_restored;'
-  - pwd
   - mysql < src/test/resources/sample_database.sql
 install:
   - mvn install -Dmaven.javadoc.skip=true -Dgpg.skip=true -B

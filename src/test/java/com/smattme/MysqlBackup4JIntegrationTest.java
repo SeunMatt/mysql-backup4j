@@ -12,6 +12,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
@@ -38,7 +39,7 @@ class MysqlBackup4JIntegrationTest {
     }
 
     @Test
-    void givenDBCredentials_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws SQLException, ClassNotFoundException, IOException {
+    void givenDBCredentials_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws Exception {
 
         Properties properties = new Properties();
         properties.setProperty(MysqlExportService.DB_NAME, TEST_DB);
@@ -81,11 +82,13 @@ class MysqlBackup4JIntegrationTest {
 
         assertTrue(res.importDatabase());
 
+        assertDatabaseBackedUp();
+
     }
 
 
     @Test
-    void givenJDBCConString_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws SQLException, ClassNotFoundException, IOException {
+    void givenJDBCConString_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws Exception {
 
         Properties properties = new Properties();
         properties.setProperty(MysqlExportService.DB_USERNAME, DB_USERNAME);
@@ -127,6 +130,17 @@ class MysqlBackup4JIntegrationTest {
 
         assertTrue(res);
 
+        assertDatabaseBackedUp();
+    }
+
+
+    private void assertDatabaseBackedUp() throws Exception {
+        Connection connection = MysqlBaseService.connect(DB_USERNAME, DB_PASSWORD, RESTORED_DB, DRIVER_CLASS_NAME);
+        Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        statement.execute("SELECT COUNT(1) as total FROM users");
+        ResultSet resultSet = statement.getResultSet();
+        resultSet.first();
+        assertTrue(resultSet.getLong("total") > 0);
     }
 
 }
