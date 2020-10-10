@@ -62,8 +62,10 @@ class MysqlBackup4JIntegrationTest {
         assertNotNull(file);
         logger.info("Generated Filename: " + file.getAbsolutePath());
 
-        String sql = new String(Files.readAllBytes(new File("external/sql/test_output_file_name.sql").toPath()));
+        File sqlFile = new File("./external/sql/test_output_file_name.sql");
+        logger.info("SQL File name: " + sqlFile.getAbsolutePath());
 
+        String sql = new String(Files.readAllBytes(sqlFile.toPath()));
         MysqlImportService res = MysqlImportService.builder()
                 .setJdbcDriver("com.mysql.cj.jdbc.Driver")
                 .setDatabase(RESTORED_DB)
@@ -77,7 +79,7 @@ class MysqlBackup4JIntegrationTest {
 
     }
 
-    @Test
+
     void givenJDBCConString_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws SQLException, ClassNotFoundException, IOException {
 
         Properties properties = new Properties();
