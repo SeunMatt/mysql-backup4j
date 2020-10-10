@@ -89,6 +89,7 @@ class MysqlBackup4JIntegrationTest {
 
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_ZIP, "true");
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_SQL_FILE, "true");
+        properties.setProperty(MysqlExportService.SQL_FILE_NAME, "test_output_file_name");
         properties.setProperty(MysqlExportService.ADD_IF_NOT_EXISTS, "true");
 
         properties.setProperty(MysqlExportService.TEMP_DIR, new File("external").getPath());
