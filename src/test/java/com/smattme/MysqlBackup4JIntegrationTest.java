@@ -62,7 +62,7 @@ class MysqlBackup4JIntegrationTest {
         assertNotNull(file);
         logger.info("Generated Filename: " + file.getAbsolutePath());
 
-        File sqlFile = new File("./external/sql/test_output_file_name.sql");
+        File sqlFile = new File("external/sql/test_output_file_name.sql");
         logger.info("SQL File name: " + sqlFile.getAbsolutePath());
 
         String sql = new String(Files.readAllBytes(sqlFile.toPath()));
