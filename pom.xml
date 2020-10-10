@@ -42,7 +42,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.12</version>
+            <version>8.0.21</version>
         </dependency>
         <dependency>
             <groupId>org.zeroturnaround</groupId>
