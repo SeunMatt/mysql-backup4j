@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -80,6 +79,7 @@ class MysqlBackup4JIntegrationTest {
     }
 
 
+    @Test
     void givenJDBCConString_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws SQLException, ClassNotFoundException, IOException {
 
         Properties properties = new Properties();
@@ -106,7 +106,10 @@ class MysqlBackup4JIntegrationTest {
 
 
         //import
-        String sql = new String(Files.readAllBytes(Paths.get("external/sql/test_output_file_name.sql")));
+        File sqlFile = new File("external/sql/test_output_file_name.sql");
+        logger.info("SQL File name: " + sqlFile.getAbsolutePath());
+
+        String sql = new String(Files.readAllBytes(sqlFile.toPath()));
         boolean res = MysqlImportService.builder()
                 .setSqlString(sql)
                 .setJdbcConnString("jdbc:mysql://localhost:3306/" + RESTORED_DB + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
