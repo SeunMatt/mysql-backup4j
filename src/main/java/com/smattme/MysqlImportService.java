@@ -139,12 +139,13 @@ public class MysqlImportService {
 
     /**
      * This function will check that required parameters
-     * are set
-     * @return bool
+     * are set.
+     * password is excluded here because it's possible to have a mysql database
+     * user with no password
+     * @return true if the required params are present and valid, false otherwise
      */
     private boolean assertValidParams() {
         return username != null && !this.username.isEmpty() &&
-                password != null && !this.password.isEmpty() &&
                 sqlString != null && !this.sqlString.isEmpty() &&
         ( (database != null && !this.database.isEmpty()) || (jdbcConnString != null && !jdbcConnString.isEmpty()) );
     }

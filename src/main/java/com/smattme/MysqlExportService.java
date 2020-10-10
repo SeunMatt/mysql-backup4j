@@ -76,12 +76,13 @@ public class MysqlExportService {
     /**
      * This function will check if the required minimum
      * properties are set for database connection and exporting
-     * @return bool
+     * password is excluded here because it's possible to have a mysql database
+     * user with no password
+     * @return true if all required properties are present and false if otherwise
      */
     private boolean isValidateProperties() {
         return properties != null &&
                 properties.containsKey(DB_USERNAME) &&
-                properties.containsKey(DB_PASSWORD) &&
                 (properties.containsKey(DB_NAME) || properties.containsKey(JDBC_CONNECTION_STRING));
     }
 
