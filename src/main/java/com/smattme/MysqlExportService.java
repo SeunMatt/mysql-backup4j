@@ -1,6 +1,5 @@
 package com.smattme;
 
-import static java.util.Objects.isNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ZipUtil;
@@ -44,6 +43,7 @@ public class MysqlExportService {
     public static final String DB_USERNAME = "DB_USERNAME";
     public static final String DB_PASSWORD = "DB_PASSWORD";
     public static final String PRESERVE_GENERATED_ZIP = "PRESERVE_GENERATED_ZIP";
+    public static final String PRESERVE_GENERATED_SQL_FILE = "PRESERVE_GENERATED_SQL_FILE";
     public static final String TEMP_DIR = "TEMP_DIR";
     public static final String ADD_IF_NOT_EXISTS = "ADD_IF_NOT_EXISTS";
 
@@ -453,7 +453,7 @@ public class MysqlExportService {
         }
 
         //clear the generated temp files
-        clearTempFiles(Boolean.parseBoolean(properties.getProperty(PRESERVE_GENERATED_ZIP, Boolean.FALSE.toString())));
+        clearTempFiles();
 
     }
 
@@ -462,32 +462,35 @@ public class MysqlExportService {
      * temp files generated ny the library
      * unless it's otherwise instructed not to do
      * so by the preserveZipFile variable
-     * @param preserveZipFile bool
+     *
      */
-    public void clearTempFiles(boolean preserveZipFile) {
+    public void clearTempFiles() {
 
-        //delete the temp sql file
-        File sqlFile = new File(dirName + "/sql/" + sqlFileName);
-        if(sqlFile.exists()) {
-            boolean res = sqlFile.delete();
-            logger.debug(LOG_PREFIX + ": " + sqlFile.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
-        } else {
-            logger.debug(LOG_PREFIX + ": " + sqlFile.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
-        }
 
-        File sqlFolder = new File(dirName + "/sql");
-        if(sqlFolder.exists()) {
-            boolean res = sqlFolder.delete();
-            logger.debug(LOG_PREFIX + ": " + sqlFolder.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
-        } else {
-            logger.debug(LOG_PREFIX + ": " + sqlFolder.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
+        if(!Boolean.parseBoolean(properties.getProperty(PRESERVE_GENERATED_SQL_FILE, Boolean.FALSE.toString()))) {
+            //delete the temp sql file
+            File sqlFile = new File(dirName + "/sql/" + sqlFileName);
+            if (sqlFile.exists()) {
+                boolean res = sqlFile.delete();
+                logger.debug(LOG_PREFIX + ": " + sqlFile.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
+            } else {
+                logger.debug(LOG_PREFIX + ": " + sqlFile.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
+            }
+
+            File sqlFolder = new File(dirName + "/sql");
+            if (sqlFolder.exists()) {
+                boolean res = sqlFolder.delete();
+                logger.debug(LOG_PREFIX + ": " + sqlFolder.getAbsolutePath() + " deleted successfully? " + (res ? " TRUE " : " FALSE "));
+            } else {
+                logger.debug(LOG_PREFIX + ": " + sqlFolder.getAbsolutePath() + " DOES NOT EXIST while clearing Temp Files");
+            }
+
         }
 
 
         //only execute this section if the
         //file is not to be preserved
-
-        if(!preserveZipFile) {
+        if(!Boolean.parseBoolean(properties.getProperty(PRESERVE_GENERATED_ZIP, Boolean.FALSE.toString()))) {
 
             //delete the zipFile
             File zipFile = new File(zipFileName);
