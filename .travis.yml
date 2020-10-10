@@ -1,5 +1,5 @@
 language: java
 jdk:
   - openjdk8
-script:
-  - mvn clean package -B -DskipTests=true
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true -B
