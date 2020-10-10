@@ -25,8 +25,8 @@ public class MysqlExportService {
     private String database;
     private String generatedSql = "";
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private final String LOG_PREFIX = "java-mysql-exporter";
-    private String dirName = "java-mysql-exporter-temp";
+    private final String LOG_PREFIX = "mysql-backup4j-export";
+    private String dirName = "mysql-backup4j-export-temp";
     private String sqlFileName = "";
     private String zipFileName = "";
     private Properties properties;
@@ -304,35 +304,6 @@ public class MysqlExportService {
         return sql.toString();
     }
 
-
-    /**
-     * Returns the last index of the character '/' that is <i>directly</i> before the
-     * character '?'.
-     * <p>
-     * Consider a url <code>jdbc:mysql://localhost:3306/db_name?serverTimezone=Europe/Athens&characterEncoding=UTF-8</code>.<br>
-     * If we just call <code>lastIndexOf('/')</code> we get an index greater than the index of '?'.
-     *
-     * @param jdbcURL the database url. Connot be empty or null
-     * @return the index of '/' that is directly before the '?'
-     * @throws RuntimeException if jdbcURL is null or empty, or does not contain a '?' char
-     */
-    private int getSlashBeforeDbNameIndex(String jdbcURL) {
-        if(isNull(jdbcURL) || jdbcURL.isEmpty()) {
-            throw new RuntimeException("url cannot be null nor empty");
-        }
-        int questionMark = jdbcURL.indexOf('?');
-        if(questionMark == -1) {
-            throw new RuntimeException("'?' not found in url");
-        }
-        int slash = jdbcURL.indexOf('/');
-        int oldSlash = slash;
-        while(slash > 0 && slash < questionMark) {
-            oldSlash = slash;
-            slash = jdbcURL.indexOf('/', oldSlash + 1);
-        }
-        return oldSlash;
-    }
-
     /**
      * This is the entry point for exporting
      * the database. It performs validation and
@@ -363,8 +334,7 @@ public class MysqlExportService {
                     database, driverName);
         }
         else {
-            if (jdbcURL.contains("?")){
-                int slashBeforeDbNameIndex = getSlashBeforeDbNameIndex(jdbcURL);
+            if (jdbcURL.contains("?")) {
                 database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1, jdbcURL.indexOf("?"));
             } else {
                 database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
@@ -391,7 +361,6 @@ public class MysqlExportService {
         if(!file.exists()) {
             boolean res = file.mkdir();
             if(!res) {
-//                logger.error(LOG_PREFIX + ": Unable to create temp dir: " + file.getAbsolutePath());
                 throw new IOException(LOG_PREFIX + ": Unable to create temp dir: " + file.getAbsolutePath());
             }
         }
@@ -419,7 +388,7 @@ public class MysqlExportService {
         if(isEmailPropertiesSet()) {
             boolean emailSendingRes = EmailService.builder()
                     .setHost(properties.getProperty(EMAIL_HOST))
-                    .setPort(Integer.valueOf(properties.getProperty(EMAIL_PORT)))
+                    .setPort(Integer.parseInt(properties.getProperty(EMAIL_PORT)))
                     .setToAddress(properties.getProperty(EMAIL_TO))
                     .setFromAddress(properties.getProperty(EMAIL_FROM))
                     .setUsername(properties.getProperty(EMAIL_USERNAME))
@@ -509,10 +478,20 @@ public class MysqlExportService {
         return sqlFileName;
     }
 
+    /**
+     * this is a getter for the raw sql generated in the backup process
+     * @return generatedSql
+     */
     public String getGeneratedSql() {
         return generatedSql;
     }
 
+    /**
+     * this is a getter for the {@link generatedZipFile} generatedZipFile File object
+     * The reference can be used for further processing in
+     * external systems
+     * @return generatedZipFile or null
+     */
     public File getGeneratedZipFile() {
         if(generatedZipFile != null && generatedZipFile.exists()) {
             return generatedZipFile;
