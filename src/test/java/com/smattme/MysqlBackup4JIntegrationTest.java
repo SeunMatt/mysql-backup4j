@@ -8,8 +8,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,6 +30,7 @@ class MysqlBackup4JIntegrationTest {
     private static final String RESTORED_DB = "mysqlbackup4j_restored";
     private static final String DB_USERNAME = "travis";
     private static final String DB_PASSWORD = "";
+    private static final String DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
 
     @BeforeEach
     void setUp() {
@@ -43,7 +48,7 @@ class MysqlBackup4JIntegrationTest {
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_ZIP, "true");
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_SQL_FILE, "true");
 
-        properties.setProperty(MysqlExportService.JDBC_DRIVER_NAME, "com.mysql.cj.jdbc.Driver");
+        properties.setProperty(MysqlExportService.JDBC_DRIVER_NAME, DRIVER_CLASS_NAME);
         properties.setProperty(MysqlExportService.ADD_IF_NOT_EXISTS, "true");
 
 
