@@ -1,7 +1,7 @@
 mysql-backup4j
 ==============
 
-[![Build Status](https://travis-ci.org/SeunMatt/mysql-backup4j.svg?branch=development)](https://travis-ci.org/SeunMatt/mysql-backup4j)
+[![Build Status](https://travis-ci.org/SeunMatt/mysql-backup4j.svg?branch=master)](https://travis-ci.org/SeunMatt/mysql-backup4j)
 
 mysql-backup4j is a library for programmatically exporting mysql databases 
 and sending the zipped dump to email, Amazon S3, Google Drive or any other cloud storage of choice
