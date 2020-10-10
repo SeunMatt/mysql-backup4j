@@ -1,6 +1,8 @@
 mysql-backup4j
 ==============
 
+[![Build Status](https://travis-ci.org/SeunMatt/mysql-backup4j.svg?branch=development)](https://travis-ci.org/SeunMatt/mysql-backup4j)
+
 mysql-backup4j is a library for programmatically exporting mysql databases 
 and sending the zipped dump to email, Amazon S3, Google Drive or any other cloud storage of choice
 
@@ -17,7 +19,7 @@ The artifact is available on Maven Central and can be added to the project's pom
 <dependency>
     <groupId>com.smattme</groupId>
     <artifactId>mysql-backup4j</artifactId>
-    <version>1.0.1</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
@@ -63,19 +65,13 @@ configuration:
 ```java
 //...
 properties.setProperty(MysqlExportService.PRESERVE_GENERATED_ZIP, "true");
+properties.setProperty(MysqlExportService.PRESERVE_GENERATED_SQL_FILE, "true");
 ```
 
 and then you can call this method:
 
 ```java
 File file = mysqlExportService.getGeneratedZipFile();
-```
-
-**Because you set preserve generated file to be true, the library will not clear the temp dir as expected 
-and you have to do that manually by calling this method:**
-
-```java
-mysqlExportService.clearTempFiles(false);
 ```
 
 Finally, let's say for some reason you want the generated SQL string you can do this:
@@ -88,8 +84,8 @@ Other parameters are:
 
 ```java
 properties.setProperty(MysqlExportService.ADD_IF_NOT_EXISTS, "true");
-properties.setProperty(MysqlExportService.JDBC_DRIVER_NAME, "root.ss");
-properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, "jdbc:mysql://localhost:3306/database-namejdbc:mysql://localhost:3306/database_name?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false");
+properties.setProperty(MysqlExportService.JDBC_DRIVER_NAME, "com.mysql.cj.jdbc.Driver");
+properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, "jdbc:mysql://localhost:3306/database-name?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false");
 ```
 
 They are explained in a detailed manner in this [tutorial](https://smattme.com/blog/technology/how-to-backup-mysql-database-programmatically-using-mysql-backup4j)

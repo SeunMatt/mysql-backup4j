@@ -74,23 +74,32 @@ public class MysqlBaseService {
         return  connection;
     }
 
-
     /**
      * This is a utility function to get the names of all
-     * the tables that're in the database supplied
+     * the tables and views that're in the database supplied
      * @param database the database name
      * @param stmt Statement object
-     * @return List\<String\>
+     * @return TableResponse object containing the list of tables and views
      * @throws SQLException exception
      */
-    static List<String> getAllTables(String database, Statement stmt) throws SQLException {
-        List<String> table = new ArrayList<>();
+    static TablesResponse getAllTablesAndViews(String database, Statement stmt) throws SQLException {
+
+        List<String> tables = new ArrayList<>();
+        List<String> views = new ArrayList<>();
+
         ResultSet rs;
         rs = stmt.executeQuery("SHOW TABLE STATUS FROM `" + database + "`;");
         while ( rs.next() ) {
-            table.add(rs.getString("Name"));
+            String comment = rs.getString("Comment");
+            if("VIEW".equals(comment)) {
+                views.add(rs.getString("Name"));
+            }
+            else {
+                tables.add(rs.getString("Name"));
+            }
         }
-        return table;
+
+        return new TablesResponse(tables, views);
     }
 
     /**
