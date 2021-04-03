@@ -1,19 +1,16 @@
 package com.smattme;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
@@ -33,9 +30,9 @@ class MysqlBackup4JIntegrationTest {
     private static final String DB_PASSWORD = "";
     private static final String DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
 
-    @BeforeEach
-    void setUp() {
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
+    @BeforeAll
+    static void setUp() {
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
     }
 
     @Test
@@ -93,6 +90,7 @@ class MysqlBackup4JIntegrationTest {
         Properties properties = new Properties();
         properties.setProperty(MysqlExportService.DB_USERNAME, DB_USERNAME);
         properties.setProperty(MysqlExportService.DB_PASSWORD, DB_PASSWORD);
+        properties.setProperty(MysqlExportService.DB_NAME, TEST_DB);
         properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, "jdbc:mysql://localhost:3306/" + TEST_DB + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false");
 
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_ZIP, "true");
@@ -124,6 +122,7 @@ class MysqlBackup4JIntegrationTest {
                 .setJdbcConnString("jdbc:mysql://localhost:3306/" + RESTORED_DB + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
                 .setUsername(DB_USERNAME)
                 .setPassword(DB_PASSWORD)
+                .setDatabase(RESTORED_DB)
                 .setDeleteExisting(true)
                 .setDropExisting(true)
                 .importDatabase();

@@ -1,5 +1,6 @@
 package com.smattme;
 
+import com.smattme.exceptions.MysqlBackup4JException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ZipUtil;
@@ -365,8 +366,9 @@ public class MysqlExportService {
 
         //check if properties is set or not
         if(!isValidateProperties()) {
-            logger.error("Invalid config properties: The config properties is missing important parameters: DB_NAME, DB_USERNAME and DB_PASSWORD");
-            return;
+            String message = "Invalid config properties: The config properties is missing important parameters: DB_NAME, DB_USERNAME and DB_PASSWORD";
+            logger.error(message);
+            throw new MysqlBackup4JException(message);
         }
 
         //connect to the database
@@ -376,17 +378,17 @@ public class MysqlExportService {
 
         Connection connection;
 
-        if(jdbcURL.isEmpty()) {
+        if(jdbcURL == null || jdbcURL.isEmpty()) {
             connection = MysqlBaseService.connect(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
                     database, driverName);
         }
         else {
-            if (jdbcURL.contains("?")) {
-                database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1, jdbcURL.indexOf("?"));
-            } else {
-                database = jdbcURL.substring(jdbcURL.lastIndexOf("/") + 1);
+            //this prioritizes the value set using the setDatabase() over the one extracted from the connection string
+            //it will only use the one from the connection string if no value is set using the setDatabase()
+            if(database == null || database.isEmpty()) {
+                database = MysqlBaseService.extractDatabaseNameFromJDBCUrl(jdbcURL);
+                logger.debug("database name extracted from connection string: " + database);
             }
-            logger.debug("database name extracted from connection string: " + database);
             connection = MysqlBaseService.connectWithURL(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
                     jdbcURL, driverName);
         }
