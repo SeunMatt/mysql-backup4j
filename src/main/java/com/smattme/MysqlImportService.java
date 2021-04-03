@@ -1,5 +1,6 @@
 package com.smattme;
 
+import com.smattme.exceptions.MysqlBackup4JException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +43,11 @@ public class MysqlImportService {
     public boolean importDatabase() throws SQLException, ClassNotFoundException {
 
         if(!this.assertValidParams()) {
-            logger.error("Required Parameters not set or empty \n" +
+            String message = "Required Parameters not set or empty \n" +
                     "Ensure database, username, password, sqlString params are configured \n" +
-                    "using their respective setters");
-            return false;
+                    "using their respective setters";
+            logger.error(message);
+            throw new MysqlBackup4JException(message);
         }
 
 
@@ -56,13 +58,13 @@ public class MysqlImportService {
         }
         else {
 
-            if (jdbcConnString.contains("?")){
-                database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1, jdbcConnString.indexOf("?"));
-            } else {
-                database = jdbcConnString.substring(jdbcConnString.lastIndexOf("/") + 1);
+            //this prioritizes the value set using the setDatabase() over the one extracted from the connection string
+            //it will only use the one from the connection string if no value is set using the setDatabase()
+            if(database == null || database.isEmpty()) {
+                database = MysqlBaseService.extractDatabaseNameFromJDBCUrl(jdbcConnString);
+                logger.debug("database name extracted from connection string: " + database);
             }
 
-            logger.debug("database name extracted from connection string: " + database);
             connection = MysqlBaseService.connectWithURL(username, password, jdbcConnString, jdbcDriver);
         }
 

@@ -142,8 +142,6 @@ Seun Matt [smattme.com](https://smattme.com) with :green_heart:
 
 Contributions and Support
 =========================
-**Love this project or found it useful? You can [buy me a cup of coffee](http://wallet.ng/pay/ossmatt)** :coffee:
-
 If you want to create a new feature, though not compulsory, but it will be helpful to reach out to me first before proceeding.
 
 To avoid a scenario where you submit a PR for an issue that someone else is working on already.
@@ -152,5 +150,3 @@ To avoid a scenario where you submit a PR for an issue that someone else is work
 Tutorials / Articles
 ====================
 - [https://smattme.com/blog/technology/how-to-backup-mysql-database-programmatically-using-mysql-backup4j](https://smattme.com/blog/technology/how-to-backup-mysql-database-programmatically-using-mysql-backup4j)
-
-- Add your own here.

@@ -1,5 +1,6 @@
 package com.smattme;
 
+import com.smattme.exceptions.MysqlBackup4JException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,6 +123,30 @@ public class MysqlBaseService {
         return  "\n" + MysqlBaseService.SQL_START_PATTERN + "\n" +
                     safeDeleteSQL + "\n" +
                 "\n" + MysqlBaseService.SQL_END_PATTERN + "\n";
+    }
+
+    /**
+     * This function will extract the database name from the
+     * supplied JDBC connection URL.
+     * @param jdbcURL JDBC Connection URL
+     * @return database name extracted from the connection URL
+     * @exception MysqlBackup4JException if an invalid jdbcURL is supplied
+     */
+    public static String extractDatabaseNameFromJDBCUrl(String jdbcURL) {
+
+        if(jdbcURL == null || jdbcURL.isEmpty())
+            throw new MysqlBackup4JException("Null or Empty JDBC URL supplied: " + jdbcURL);
+
+        //strip the extra properties from the URL
+        String jdbcURLWithoutParams;
+        if(jdbcURL.contains("?")) {
+            jdbcURLWithoutParams = jdbcURL.substring(0, jdbcURL.indexOf("?"));
+        }
+        else {
+            jdbcURLWithoutParams = jdbcURL;
+        }
+
+        return jdbcURLWithoutParams.substring(jdbcURLWithoutParams.lastIndexOf("/") + 1);
     }
 
 }
