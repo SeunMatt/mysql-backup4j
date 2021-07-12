@@ -1,5 +1,6 @@
 package com.smattme;
 
+import cn.hutool.core.util.HexUtil;
 import com.smattme.exceptions.MysqlBackup4JException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -252,6 +253,9 @@ public class MysqlExportService {
                 }
                 else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
+                }
+                else if( columnType == Types.LONGVARBINARY) {
+                    sql.append("0x").append(HexUtil.encodeHexStr(rs.getBytes(columnIndex), false)).append(", ");
                 }
                 else {
 
