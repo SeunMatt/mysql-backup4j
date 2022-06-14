@@ -138,20 +138,20 @@ public class MysqlExportService {
             while ( rs.next() ) {
                 String qtbl = rs.getString(1);
                 String query = rs.getString(2);
-                sql.append("%n%n--");
-                sql.append("%n").append(MysqlBaseService.SQL_START_PATTERN).append("  table dump : ").append(qtbl);
-                sql.append("%n--%n%n");
+                sql.append("\n\n--");
+                sql.append("\n").append(MysqlBaseService.SQL_START_PATTERN).append("  table dump : ").append(qtbl);
+                sql.append("\n--\n\n");
 
                 if(addIfNotExists) {
                     query = query.trim().replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
                 }
 
-                sql.append(query).append(";%n%n");
+                sql.append(query).append(";\n\n");
             }
 
-            sql.append("%n%n--");
-            sql.append("%n").append(MysqlBaseService.SQL_END_PATTERN).append("  table dump : ").append(table);
-            sql.append("%n--%n%n");
+            sql.append("\n\n--");
+            sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  table dump : ").append(table);
+            sql.append("\n--\n\n");
         }
 
         return sql.toString();
@@ -174,17 +174,17 @@ public class MysqlExportService {
             while ( rs.next() ) {
                 String viewName = rs.getString(1);
                 String viewQuery = rs.getString(2);
-                sql.append("%n%n--");
-                sql.append("%n").append(MysqlBaseService.SQL_START_PATTERN).append("  view dump : ").append(view);
-                sql.append("%n--%n%n");
+                sql.append("\n\n--");
+                sql.append("\n").append(MysqlBaseService.SQL_START_PATTERN).append("  view dump : ").append(view);
+                sql.append("\n--\n\n");
 
                 String finalQuery = "CREATE OR REPLACE VIEW `" + viewName + "` " + (viewQuery.substring(viewQuery.indexOf("AS")).trim());
-                sql.append(finalQuery).append(";%n%n");
+                sql.append(finalQuery).append(";\n\n");
             }
 
-            sql.append("%n%n--");
-            sql.append("%n").append(MysqlBaseService.SQL_END_PATTERN).append("  view dump : ").append(view);
-            sql.append("%n--%n%n");
+            sql.append("\n\n--");
+            sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  view dump : ").append(view);
+            sql.append("\n--\n\n");
         }
 
         return sql.toString();
@@ -197,46 +197,48 @@ public class MysqlExportService {
      * @param table the table to get inserts statement for
      * @throws SQLException exception
      */
-    private void writeDataInsertStatement(String table, Consumer<String> writer) throws SQLException {
-        ResultSet tableSizeRS = stmt.executeQuery("SELECT COUNT(*) FROM " + "`" + table + "`;");
-        long tableSize = tableSizeRS.getLong(0);
+    private void writeDataInsertStatement(String table, Connection connection, Consumer<String> writer) throws SQLException {
+        ResultSet tableSizeRS = stmt.executeQuery("SELECT COUNT(*) as tableSize FROM " + "`" + table + "`;");
+        tableSizeRS.next();
+        long tableSize = tableSizeRS.getLong("tableSize");
         if (tableSize <= 0) {
             return;
         }
 
         StringBuilder sql = new StringBuilder();
-        sql.append("%n--").append("%n-- Inserts of ").append(table).append("%n--%n%n");
+        sql.append("\n--").append("\n-- Inserts of ").append(table).append("\n--\n\n");
 
         //temporarily disable foreign key constraint
-        sql.append("%n/*!40000 ALTER TABLE `").append(table).append("` DISABLE KEYS */;%n");
+        sql.append("\n/*!40000 ALTER TABLE `").append(table).append("` DISABLE KEYS */;\n");
 
-        sql.append("%n--%n")
+        sql.append("\n--\n")
                 .append(MysqlBaseService.SQL_START_PATTERN).append(" table insert : ").append(table)
-                .append("%n--%n");
+                .append("\n--\n");
 
         writer.accept(sql.toString());
 
-        long batchSize = 1000L;
-        LongStream.range(1L, (long) Math.ceil(tableSize/batchSize)).forEach(pageNumber -> {
+        long batchSize = 50000L;
+        LongStream.range(0L, (tableSize + batchSize - 1)/batchSize).forEach(pageNumber -> {
             try {
-                writer.accept(getInsertBatch(table, (pageNumber - 1L) * batchSize, batchSize));
+                writer.accept(getInsertBatch(table, pageNumber * batchSize, batchSize));
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         });
 
         sql = new StringBuilder();
-        //now that we are done processing the entire row
-        //let's add the terminator
-        sql.append(";");
 
-        sql.append("%n--%n")
+        sql.append("\n--\n")
                 .append(MysqlBaseService.SQL_END_PATTERN).append(" table insert : ").append(table)
-                .append("%n--%n");
+                .append("\n--\n");
 
         //enable FK constraint
-        sql.append("%n/*!40000 ALTER TABLE `").append(table).append("` ENABLE KEYS */;%n");
+        sql.append("\n/*!40000 ALTER TABLE `").append(table).append("` ENABLE KEYS */;\n");
         writer.accept(sql.toString());
+    }
+
+    public static long roundUp(long num, long divisor) {
+        return (num + divisor - 1) / divisor;
     }
 
     private String getInsertBatch(String table, long offset, long limit) throws SQLException {
@@ -268,7 +270,7 @@ public class MysqlExportService {
         }
 
         //remove the last whitespace and comma
-        sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1).append(") VALUES %n");
+        sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1).append(") VALUES \n");
 
         //now we're going to build the values for data insertion
         rs.beforeFirst();
@@ -304,9 +306,9 @@ public class MysqlExportService {
             //parenthesis otherwise append a closing parenthesis and a comma
             //for the next set of values
             if(rs.isLast()) {
-                sql.append(")");
+                sql.append(");\n");
             } else {
-                sql.append("),%n");
+                sql.append("),\n");
             }
         }
         return sql.toString();
@@ -320,19 +322,19 @@ public class MysqlExportService {
      * script of SQL
      * @throws SQLException exception
      */
-    private void exportToSql(Consumer<String> writer) throws SQLException {
+    private void exportToSql(Connection connection, Consumer<String> writer) throws SQLException {
         writer.accept("--");
-        writer.accept("%n-- Generated by mysql-backup4j");
-        writer.accept("%n-- https://github.com/SeunMatt/mysql-backup4j");
-        writer.accept(String.format("%n-- Date: %s", new SimpleDateFormat("d-M-Y H:m:s").format(new Date())));
-        writer.accept("%n--");
+        writer.accept("\n-- Generated by mysql-backup4j");
+        writer.accept("\n-- https://github.com/SeunMatt/mysql-backup4j");
+        writer.accept(String.format("\n-- Date: %s", new SimpleDateFormat("d-M-Y H:m:s").format(new Date())));
+        writer.accept("\n--");
 
         //these declarations are extracted from HeidiSQL
-        writer.accept("%n%n/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;");
-        writer.accept("%n/*!40101 SET NAMES utf8 */;");
-        writer.accept("%n/*!50503 SET NAMES utf8mb4 */;");
-        writer.accept("%n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;");
-        writer.accept("%n/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;");
+        writer.accept("\n\n/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;");
+        writer.accept("\n/*!40101 SET NAMES utf8 */;");
+        writer.accept("\n/*!50503 SET NAMES utf8mb4 */;");
+        writer.accept("\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;");
+        writer.accept("\n/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;");
 
         TablesResponse allTablesAndViews = MysqlBaseService.getAllTablesAndViews(database, stmt);
 
@@ -342,7 +344,7 @@ public class MysqlExportService {
         for (String s: tables) {
             try {
                 writer.accept(getTableInsertStatement(s.trim()));
-                writeDataInsertStatement(s.trim(), writer);
+                writeDataInsertStatement(s.trim(), connection, writer);
             } catch (SQLException e) {
                 logger.error("Exception occurred while processing table: " + s, e);
             }
@@ -359,9 +361,9 @@ public class MysqlExportService {
             }
         }
 
-        writer.accept("%n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;");
-        writer.accept("%n/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;");
-        writer.accept("%n/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;");
+        writer.accept("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;");
+        writer.accept("\n/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;");
+        writer.accept("\n/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;");
     }
 
     /**
@@ -464,7 +466,7 @@ public class MysqlExportService {
         FileOutputStream outputStream = new FileOutputStream( sqlFolder + "/" + sqlFileName);
 
         //generate the final SQL
-        exportToSql(sql -> {
+        exportToSql(connection, sql -> {
             try {
                 outputStream.write(sql.getBytes());
             } catch (IOException e) {
