@@ -2,7 +2,7 @@ package com.smattme;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by seun_ on 10-Oct-20.
  *
  */
+@Tag("Integration")
 class MysqlBackup4JIntegrationTest {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
