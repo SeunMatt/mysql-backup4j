@@ -1,8 +1,6 @@
 package com.smattme;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,19 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by seun_ on 10-Oct-20.
  *
  */
-class MysqlBackup4JIntegrationTest {
+class MysqlBackup4JIntegrationTest extends BaseTest {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private static final String TEST_DB = "mysqlbackup4j_test";
-    private static final String RESTORED_DB = "mysqlbackup4j_restored";
-    private static final String DB_USERNAME = "travis";
-    private static final String DB_PASSWORD = "";
-    private static final String DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
-
-    @BeforeAll
-    static void setUp() {
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
-    }
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Test
     void givenDBCredentials_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws Exception {
@@ -91,7 +79,10 @@ class MysqlBackup4JIntegrationTest {
         properties.setProperty(MysqlExportService.DB_USERNAME, DB_USERNAME);
         properties.setProperty(MysqlExportService.DB_PASSWORD, DB_PASSWORD);
         properties.setProperty(MysqlExportService.DB_NAME, TEST_DB);
-        properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, "jdbc:mysql://localhost:3306/" + TEST_DB + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false");
+
+        String jdbcURL = String.format("jdbc:mysql://%s:%s/%s?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false",
+                DB_HOST, DB_PORT, TEST_DB);
+        properties.setProperty(MysqlExportService.JDBC_CONNECTION_STRING, jdbcURL);
 
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_ZIP, "true");
         properties.setProperty(MysqlExportService.PRESERVE_GENERATED_SQL_FILE, "true");
@@ -104,8 +95,7 @@ class MysqlBackup4JIntegrationTest {
         mysqlExportService.export();
 
         String generatedSql = mysqlExportService.getGeneratedSql();
-
-        logger.debug("Final Output:\n {}", generatedSql);
+        Assertions.assertFalse(generatedSql.isEmpty());
 
         File file = mysqlExportService.getGeneratedZipFile();
         assertNotNull(file);
@@ -116,10 +106,13 @@ class MysqlBackup4JIntegrationTest {
         File sqlFile = new File("external/sql/test_output_file_name.sql");
         logger.info("SQL File name: " + sqlFile.getAbsolutePath());
 
+        String restoreDBJdbcUrl = String.format("jdbc:mysql://%s:%s/%s?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false",
+                DB_HOST, DB_PORT, RESTORED_DB);
+
         String sql = new String(Files.readAllBytes(sqlFile.toPath()));
         boolean res = MysqlImportService.builder()
                 .setSqlString(sql)
-                .setJdbcConnString("jdbc:mysql://localhost:3306/" + RESTORED_DB + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
+                .setJdbcConnString(restoreDBJdbcUrl)
                 .setUsername(DB_USERNAME)
                 .setPassword(DB_PASSWORD)
                 .setDatabase(RESTORED_DB)
@@ -134,12 +127,15 @@ class MysqlBackup4JIntegrationTest {
 
 
     private void assertDatabaseBackedUp() throws Exception {
-        Connection connection = MysqlBaseService.connect(DB_USERNAME, DB_PASSWORD, RESTORED_DB, DRIVER_CLASS_NAME);
-        Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        statement.execute("SELECT COUNT(1) as total FROM users");
-        ResultSet resultSet = statement.getResultSet();
-        resultSet.first();
-        assertTrue(resultSet.getLong("total") > 0);
+        String restoreDBJdbcUrl = String.format("jdbc:mysql://%s:%s/%s?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false",
+                DB_HOST, DB_PORT, RESTORED_DB);
+       try(Connection connection = MysqlBaseService.connectWithURL(DB_USERNAME, DB_PASSWORD, restoreDBJdbcUrl, DRIVER_CLASS_NAME)) {
+           Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+           statement.execute("SELECT COUNT(1) as total FROM users");
+           ResultSet resultSet = statement.getResultSet();
+           resultSet.first();
+           assertTrue(resultSet.getLong("total") > 0);
+       }
     }
 
 }
