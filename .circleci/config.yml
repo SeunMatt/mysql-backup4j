@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/openjdk:8.0
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Build and Test
+          command: mvn -B clean package
+
+
+workflows:
+  build:
+    jobs:
+      - build-and-test
