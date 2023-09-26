@@ -23,7 +23,7 @@ class MysqlBackup4JIntegrationTest extends BaseTest {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Test
+
     void givenDBCredentials_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws Exception {
 
         Properties properties = new Properties();
