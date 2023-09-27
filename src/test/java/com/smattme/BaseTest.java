@@ -30,6 +30,7 @@ public class BaseTest {
         mysql.withUsername(DB_USERNAME)
                 .withPassword(DB_PASSWORD)
                 .withEnv("MYSQL_ROOT_PASSWORD", DB_PASSWORD)
+                .withExposedPorts(3306)
                 .withInitScript("sample_database.sql")
             .start();
         DB_PORT = mysql.getMappedPort(3306).toString();

@@ -12,7 +12,6 @@ jobs:
           name: Build and Test
           command: mvn -B clean package
 
-
 workflows:
   build:
     jobs:
