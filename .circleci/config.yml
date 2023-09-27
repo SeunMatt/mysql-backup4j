@@ -11,6 +11,8 @@ jobs:
       - run:
           name: Build and Test
           command: mvn -B clean package
+      - store_test_results:
+          path: surefire-reports
 
 workflows:
   build:
