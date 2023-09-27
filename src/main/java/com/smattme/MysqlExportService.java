@@ -47,6 +47,7 @@ public class MysqlExportService {
     public static final String PRESERVE_GENERATED_SQL_FILE = "PRESERVE_GENERATED_SQL_FILE";
     public static final String TEMP_DIR = "TEMP_DIR";
     public static final String ADD_IF_NOT_EXISTS = "ADD_IF_NOT_EXISTS";
+    public static final String PROTOCOLS = "PROTOCOLS";
 
 
     /**
@@ -438,6 +439,7 @@ public class MysqlExportService {
             boolean emailSendingRes = EmailService.builder()
                     .setHost(properties.getProperty(EMAIL_HOST))
                     .setPort(Integer.parseInt(properties.getProperty(EMAIL_PORT)))
+                    .setProtocols(properties.getProperty(PROTOCOLS))
                     .setToAddress(properties.getProperty(EMAIL_TO))
                     .setFromAddress(properties.getProperty(EMAIL_FROM))
                     .setUsername(properties.getProperty(EMAIL_USERNAME))

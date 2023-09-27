@@ -2,6 +2,7 @@
 /src/test/java/com/smattme/MysqlExportServiceUnitTest.java
 /target/
 /.idea/
+*.iml
 .DS_Store
 /smatt_files/
 /external/

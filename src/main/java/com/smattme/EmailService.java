@@ -19,6 +19,7 @@ class EmailService {
 
     private String host = "";
     private int port = 0;
+    private String protocols = "";
     private String fromAdd = "";
     private String toAdd = "";
     private String username = "";
@@ -48,6 +49,11 @@ class EmailService {
 
     EmailService setPort(int port) {
         this.port = port;
+        return this;
+    }
+
+    EmailService setProtocols(String protocols) {
+        this.protocols = protocols;
         return this;
     }
 
@@ -122,6 +128,8 @@ class EmailService {
         prop.put("mail.smtp.host", this.host);
         prop.put("mail.smtp.port", this.port);
         prop.put("mail.smtp.ssl.trust", host);
+        prop.put("mail.smtp.ssl.protocols", this.protocols);
+        prop.put("mail.smtp.starttls.required", "true");
 
         logger.debug(LOG_PREFIX + ": Mail properties set");
 
