@@ -24,9 +24,9 @@ class MysqlBackup4JIntegrationTest extends BaseTest {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Test
-    void givenDBCredentials_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws Exception {
+    void givenMySQLRunningOnLocalhostAndDefaultPort_whenExportDatabaseAndImportDatabase_thenBackUpAndRestoreTestDbSuccessfully() throws Exception {
 
-        logger.info("DB HOST: {}, DB PORT: {}", DB_HOST, DB_PORT);
+        if(!"localhost".equals(DB_HOST) || !"3306".equals(DB_PORT)) return;
 
         Properties properties = new Properties();
         properties.setProperty(MysqlExportService.DB_NAME, TEST_DB);

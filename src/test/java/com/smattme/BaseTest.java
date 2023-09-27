@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.Objects;
 
 public class BaseTest {
@@ -28,7 +27,6 @@ public class BaseTest {
     static void setUp() {
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "trace");
         mysql.addFixedExposedPort(3306, 3306);
-        mysql.withExtraHost("localhost", "127.0.0.1");
         mysql.withUsername(DB_USERNAME)
                 .withPassword(DB_PASSWORD)
                 .withEnv("MYSQL_ROOT_PASSWORD", DB_PASSWORD)
@@ -37,6 +35,7 @@ public class BaseTest {
             .start();
         DB_PORT = mysql.getMappedPort(3306).toString();
         DB_HOST = mysql.getHost();
+        logger.info("DB_HOST: {}, DB_PORT: {}", DB_HOST, DB_PORT);
     }
 
 
