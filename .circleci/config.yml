@@ -12,7 +12,7 @@ jobs:
           name: Build and Test
           command: mvn -B clean package
       - store_test_results:
-          path: surefire-reports
+          path: target/surefire-reports
 
 workflows:
   build:
