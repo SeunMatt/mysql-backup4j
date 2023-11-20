@@ -269,7 +269,7 @@ public class MysqlExportService {
             if(Objects.isNull(rs.getObject(columnIndex))) {
                 sql.append("").append(rs.getObject(columnIndex)).append(", ");
             }
-            else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
+            else if( columnType == Types.BIGINT || columnType == Types.INTEGER || columnType == Types.SMALLINT || columnType == Types.TINYINT || columnType == Types.BIT || columnType == Types.FLOAT || columnType == Types.REAL || columnType == Types.DOUBLE || columnType == Types.NUMERIC || columnType == Types.DECIMAL) {
                 sql.append(rs.getInt(columnIndex)).append(", ");
             }
             else {
