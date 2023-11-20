@@ -5,7 +5,7 @@
 
     <groupId>fr.neolegal</groupId>
     <artifactId>mysql-backup4j</artifactId>
-    <version>1.2.4</version>
+    <version>1.2.5</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
