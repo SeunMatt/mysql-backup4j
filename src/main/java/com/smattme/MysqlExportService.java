@@ -262,14 +262,14 @@ public class MysqlExportService {
         sql.append("(");
         for(int i = 0; i < columnCount; i++) {
 
-            int columnType = metaData.getColumnType(i + 1);
             int columnIndex = i + 1;
+            int columnType = metaData.getColumnType(columnIndex);
 
             //this is the part where the values are processed based on their type
             if(Objects.isNull(rs.getObject(columnIndex))) {
                 sql.append("").append(rs.getObject(columnIndex)).append(", ");
             }
-            else if( columnType == Types.BIGINT || columnType == Types.INTEGER || columnType == Types.SMALLINT || columnType == Types.TINYINT || columnType == Types.BIT || columnType == Types.FLOAT || columnType == Types.REAL || columnType == Types.DOUBLE || columnType == Types.NUMERIC || columnType == Types.DECIMAL) {
+            else if( columnType == Types.BIGINT || columnType == Types.INTEGER || columnType == Types.SMALLINT || columnType == Types.TINYINT || columnType == Types.BIT || columnType == Types.FLOAT || columnType == Types.REAL || columnType == Types.DOUBLE || columnType == Types.NUMERIC || columnType == Types.DECIMAL || columnType == Types.BOOLEAN) {
                 sql.append(rs.getInt(columnIndex)).append(", ");
             }
             else {

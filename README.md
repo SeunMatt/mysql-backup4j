@@ -138,6 +138,8 @@ Supplying `false` to these functions will disable their respective actions.
 
 CHANGELOG
 =========
+V 1.2.5
+    - Handling of BOOLEAN
 V 1.2.4
     - Handling of BIGINT, SMALLINT, FLOAT, REAL, DOUBLE, NUMERIC, DECIMAL
 V 1.2.1
