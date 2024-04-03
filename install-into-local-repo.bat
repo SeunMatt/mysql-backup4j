@@ -1,0 +1,3 @@
+call mvn install:install-file -Dfile="target/mysql-backup4j-1.2.2.jar" -DgroupId="com.smattme" -DartifactId="mysql-backup4j" -Dversion="1.2.2" -Dpackaging=jar -DlocalRepositoryPath="../bartleby/.m2"
+certutil -hashfile  "../bartleby/.m2/com/smattme/mysql-backup4j/1.2.2/mysql-backup4j-1.2.2.jar" MD5 > "../bartleby/.m2/com/smattme/mysql-backup4j/1.2.2/mysql-backup4j-1.2.2.jar.MD5"
+certutil -hashfile  "../bartleby/.m2/com/smattme/mysql-backup4j/1.2.2/mysql-backup4j-1.2.2.pom" MD5 > "../bartleby/.m2/com/smattme/mysql-backup4j/1.2.2/mysql-backup4j-1.2.2.pom.MD5"

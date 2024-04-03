@@ -68,6 +68,7 @@ public class MysqlExportService {
     public static final String JDBC_CONNECTION_STRING = "JDBC_CONNECTION_STRING";
     public static final String JDBC_DRIVER_NAME = "JDBC_DRIVER_NAME";
     public static final String SQL_FILE_NAME = "SQL_FILE_NAME";
+    public static final String MAX_INSERT_SIZE = "MAX_INSERT_SIZE";
 
 
     public MysqlExportService(Properties properties) {
@@ -136,9 +137,7 @@ public class MysqlExportService {
             while ( rs.next() ) {
                 String qtbl = rs.getString(1);
                 String query = rs.getString(2);
-                sql.append("\n\n--");
-                sql.append("\n").append(MysqlBaseService.SQL_START_PATTERN).append("  table dump : ").append(qtbl);
-                sql.append("\n--\n\n");
+                sql.append(buildStartPattern("  table dump : " + qtbl));
 
                 if(addIfNotExists) {
                     query = query.trim().replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
@@ -147,9 +146,7 @@ public class MysqlExportService {
                 sql.append(query).append(";\n\n");
             }
 
-            sql.append("\n\n--");
-            sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  table dump : ").append(table);
-            sql.append("\n--\n\n");
+            sql.append(buildEndPattern("  table dump : " + table));
         }
 
         return sql.toString();
@@ -171,18 +168,14 @@ public class MysqlExportService {
             rs = stmt.executeQuery("SHOW CREATE VIEW " + "`" + view + "`;");
             while ( rs.next() ) {
                 String viewName = rs.getString(1);
-                String viewQuery = rs.getString(2);
-                sql.append("\n\n--");
-                sql.append("\n").append(MysqlBaseService.SQL_START_PATTERN).append("  view dump : ").append(view);
-                sql.append("\n--\n\n");
+                String viewQuery = rs.getString(2);                
+                sql.append(buildStartPattern("  view dump : " + view));
 
                 String finalQuery = "CREATE OR REPLACE VIEW `" + viewName + "` " + (viewQuery.substring(viewQuery.indexOf("AS")).trim());
                 sql.append(finalQuery).append(";\n\n");
             }
 
-            sql.append("\n\n--");
-            sql.append("\n").append(MysqlBaseService.SQL_END_PATTERN).append("  view dump : ").append(view);
-            sql.append("\n--\n\n");
+            sql.append(buildEndPattern("  view dump : " + view));
         }
 
         return sql.toString();
@@ -216,10 +209,100 @@ public class MysqlExportService {
         //temporarily disable foreign key constraint
         sql.append("\n/*!40000 ALTER TABLE `").append(table).append("` DISABLE KEYS */;\n");
 
-        sql.append("\n--\n")
-                .append(MysqlBaseService.SQL_START_PATTERN).append(" table insert : ").append(table)
-                .append("\n--\n");
+        final String queryStart = buildInsertQueryStart(table, rs);
+        Long maxInsertSize = getMaxInsertSize();
+        int currentQueryStartPosition = sql.length();
 
+
+        //now we're going to build the values for data insertion
+        rs.beforeFirst();
+        while(rs.next()) {
+            String insertQueryValues = buildInsertQueryValues(rs);
+
+            int currentInsertQueryLength = sql.length() - currentQueryStartPosition;
+            boolean newInsertQueryRequired = currentInsertQueryLength == 0 || (maxInsertSize > 0 && currentInsertQueryLength >= maxInsertSize);
+            if (newInsertQueryRequired) {
+                if (currentInsertQueryLength > 0) {
+                    sql.append(";\n");
+                    sql.append(buildEndPattern(" table insert : " + table));
+                }                
+                sql.append(buildStartPattern(" table insert : " + table));
+                currentQueryStartPosition = sql.length();
+                sql.append(queryStart);
+            } else {
+                sql.append(",\n");
+            }
+            sql.append(insertQueryValues);
+        }
+
+        //now that we are done processing the entire row
+        //let's add the terminator
+        sql.append(";");
+
+        sql.append(buildEndPattern(" table insert : " + table));
+
+        //enable FK constraint
+        sql.append("\n/*!40000 ALTER TABLE `").append(table).append("` ENABLE KEYS */;\n");
+
+        return sql.toString();
+    }
+
+    String buildStartPattern(String comment) {
+        return "\n--\n" + MysqlBaseService.SQL_START_PATTERN + comment + "\n--\n";
+    }
+
+    String buildEndPattern(String comment) {
+        return "\n--\n" + MysqlBaseService.SQL_END_PATTERN + comment + "\n--\n";
+    }
+
+    private String buildInsertQueryValues(ResultSet rs) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        sql.append("(");
+        for(int i = 0; i < columnCount; i++) {
+
+            int columnIndex = i + 1;
+            int columnType = metaData.getColumnType(columnIndex);
+
+            //this is the part where the values are processed based on their type
+            if(Objects.isNull(rs.getObject(columnIndex))) {
+                sql.append("").append(rs.getObject(columnIndex)).append(", ");
+            }
+            else if( columnType == Types.BIGINT || columnType == Types.INTEGER || columnType == Types.SMALLINT || columnType == Types.TINYINT || columnType == Types.BIT || columnType == Types.FLOAT || columnType == Types.REAL || columnType == Types.DOUBLE || columnType == Types.NUMERIC || columnType == Types.DECIMAL || columnType == Types.BOOLEAN) {
+                sql.append(rs.getInt(columnIndex)).append(", ");
+            }
+            else {
+
+                String val = rs.getString(columnIndex);
+               //escape the single quotes that might be in the value
+                val = val.replace("'", "\\'");
+
+                sql.append("'").append(val).append("', ");
+            }
+        }
+
+        //now that we're done with a row
+        //let's remove the last whitespace and comma
+        sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1);
+
+        sql.append(")");
+
+        return sql.toString();
+    }
+
+
+    private Long getMaxInsertSize() {
+        try {
+            String prop = properties.getProperty(MAX_INSERT_SIZE);
+            return prop != null ? Long.parseLong(prop) : 0L;
+        } catch (Exception e) {
+            return 0L;
+        }
+ }
+
+    private String buildInsertQueryStart(String table, ResultSet rs) throws SQLException {
+        StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO `").append(table).append("`(");
 
         ResultSetMetaData metaData = rs.getMetaData();
@@ -236,61 +319,8 @@ public class MysqlExportService {
 
         //remove the last whitespace and comma
         sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1).append(") VALUES \n");
-
-        //now we're going to build the values for data insertion
-        rs.beforeFirst();
-        while(rs.next()) {
-            sql.append("(");
-            for(int i = 0; i < columnCount; i++) {
-
-                int columnType = metaData.getColumnType(i + 1);
-                int columnIndex = i + 1;
-
-                //this is the part where the values are processed based on their type
-                if(Objects.isNull(rs.getObject(columnIndex))) {
-                    sql.append("").append(rs.getObject(columnIndex)).append(", ");
-                }
-                else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
-                    sql.append(rs.getInt(columnIndex)).append(", ");
-                }
-                else {
-
-                    String val = rs.getString(columnIndex);
-                   //escape the single quotes that might be in the value
-                    val = val.replace("'", "\\'");
-
-                    sql.append("'").append(val).append("', ");
-                }
-            }
-
-            //now that we're done with a row
-            //let's remove the last whitespace and comma
-            sql.deleteCharAt(sql.length() - 1).deleteCharAt(sql.length() - 1);
-
-            //if this is the last row, just append a closing
-            //parenthesis otherwise append a closing parenthesis and a comma
-            //for the next set of values
-            if(rs.isLast()) {
-                sql.append(")");
-            } else {
-                sql.append("),\n");
-            }
-        }
-
-        //now that we are done processing the entire row
-        //let's add the terminator
-        sql.append(";");
-
-        sql.append("\n--\n")
-                .append(MysqlBaseService.SQL_END_PATTERN).append(" table insert : ").append(table)
-                .append("\n--\n");
-
-        //enable FK constraint
-        sql.append("\n/*!40000 ALTER TABLE `").append(table).append("` ENABLE KEYS */;\n");
-
         return sql.toString();
     }
-
 
     /**
      * This is the entry function that'll
