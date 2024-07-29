@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
+import static com.smattme.helpers.MysqlExportServiceHelper.bytesToHex;
+
 /**
  * Created by seun_ on 24-Feb-18.
  *
@@ -252,6 +254,9 @@ public class MysqlExportService {
                 }
                 else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
+                }
+                else if(columnType == Types.BLOB || columnType == Types.LONGVARBINARY || columnType == Types.VARBINARY) {
+                    sql.append("0x").append(bytesToHex(rs.getBytes(columnIndex))).append(", ");
                 }
                 else {
 
