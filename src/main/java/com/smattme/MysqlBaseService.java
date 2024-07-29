@@ -33,11 +33,26 @@ public class MysqlBaseService {
      * @throws ClassNotFoundException exception
      * @throws SQLException exception
      */
+    @Deprecated
     static Connection connect(String username, String password, String database, String driverName) throws ClassNotFoundException, SQLException {
         String url = "jdbc:mysql://localhost:3306/" + database + "?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false";
         String driver = (Objects.isNull(driverName) || driverName.isEmpty()) ? "com.mysql.cj.jdbc.Driver" : driverName;
         return doConnect(driver, url, username, password);
     }
+
+    public static Connection connect(String username, String password, String host, String port, String database, String driverName) throws ClassNotFoundException, SQLException {
+
+        String url = String.format("jdbc:mysql://%s:%s/%s", host, port, database);
+        url = url + "?useUnicode=true&useJDBCCompliantTimezoneShift=true"
+                + "&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false";
+
+        String driver = (Objects.isNull(driverName) || driverName.isEmpty())
+                        ? "com.mysql.cj.jdbc.Driver"
+                        : driverName;
+
+        return doConnect(driver, url, username, password);
+    }
+
 
     /**
      * This is a utility function that allows connecting
