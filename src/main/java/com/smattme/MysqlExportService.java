@@ -250,12 +250,18 @@ public class MysqlExportService {
 
                 //this is the part where the values are processed based on their type
                 if(Objects.isNull(rs.getObject(columnIndex))) {
-                    sql.append("").append(rs.getObject(columnIndex)).append(", ");
+                    sql.append(rs.getObject(columnIndex)).append(", ");
                 }
-                else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
+                else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT
+                        || columnType == Types.SMALLINT || columnType == Types.BIGINT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
                 }
-                else if(columnType == Types.BLOB || columnType == Types.LONGVARBINARY || columnType == Types.VARBINARY) {
+                else if(columnType == Types.REAL || columnType == Types.FLOAT || columnType == Types.DOUBLE || columnType == Types.DECIMAL
+                || columnType == Types.NUMERIC) {
+                    sql.append(rs.getDouble(columnIndex)).append(", ");
+                }
+
+                else if(columnType == Types.BINARY || columnType == Types.BLOB || columnType == Types.LONGVARBINARY || columnType == Types.VARBINARY) {
                     sql.append("0x").append(bytesToHex(rs.getBytes(columnIndex))).append(", ");
                 }
                 else {
