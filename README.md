@@ -1,7 +1,7 @@
 mysql-backup4j
 ==============
 
-[![Build Status](https://travis-ci.org/SeunMatt/mysql-backup4j.svg?branch=master)](https://travis-ci.org/SeunMatt/mysql-backup4j)
+[![SeunMatt](https://circleci.com/gh/SeunMatt/request-validator.svg?style=svg)](https://github.com/SeunMatt/mysql-backup4j)
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.smattme/mysql-backup4j/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.smattme/mysql-backup4j/badge.svg)
 
