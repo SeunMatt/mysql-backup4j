@@ -19,6 +19,8 @@ public class MysqlImportService {
 
     private String database;
     private String username;
+    private String host = "localhost";
+    private String port = "3306";
     private String password;
     private String sqlString;
     private String jdbcConnString;
@@ -54,7 +56,7 @@ public class MysqlImportService {
         //connect to the database
         Connection connection;
         if(jdbcConnString == null || jdbcConnString.isEmpty()) {
-            connection = MysqlBaseService.connect(username, password, database, jdbcDriver);
+            connection = MysqlBaseService.connect(username, password, host, port, database, jdbcDriver);
         }
         else {
 
@@ -208,6 +210,16 @@ public class MysqlImportService {
 
     public MysqlImportService setJdbcConnString(String jdbcConnString) {
         this.jdbcConnString = jdbcConnString;
+        return this;
+    }
+
+    public MysqlImportService setHost(String host) {
+        this.host = host;
+        return this;
+    }
+
+    public MysqlImportService setPort(String port) {
+        this.port = port;
         return this;
     }
 }

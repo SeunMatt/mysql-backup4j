@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
+import static com.smattme.helpers.MysqlExportServiceHelper.bytesToHex;
+
 /**
  * Created by seun_ on 24-Feb-18.
  *
@@ -40,9 +42,12 @@ public class MysqlExportService {
     public static final String EMAIL_MESSAGE = "EMAIL_MESSAGE";
     public static final String EMAIL_FROM = "EMAIL_FROM";
     public static final String EMAIL_TO = "EMAIL_TO";
+    public static final String EMAIL_SSL_PROTOCOLS = "EMAIL_SSL_PROTOCOLS";
     public static final String DB_NAME = "DB_NAME";
     public static final String DB_USERNAME = "DB_USERNAME";
     public static final String DB_PASSWORD = "DB_PASSWORD";
+    public static final String DB_HOST = "DB_HOST";
+    public static final String DB_PORT = "DB_PORT";
     public static final String PRESERVE_GENERATED_ZIP = "PRESERVE_GENERATED_ZIP";
     public static final String PRESERVE_GENERATED_SQL_FILE = "PRESERVE_GENERATED_SQL_FILE";
     public static final String TEMP_DIR = "TEMP_DIR";
@@ -248,10 +253,19 @@ public class MysqlExportService {
 
                 //this is the part where the values are processed based on their type
                 if(Objects.isNull(rs.getObject(columnIndex))) {
-                    sql.append("").append(rs.getObject(columnIndex)).append(", ");
+                    sql.append(rs.getObject(columnIndex)).append(", ");
                 }
-                else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT) {
+                else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT
+                        || columnType == Types.SMALLINT || columnType == Types.BIGINT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
+                }
+                else if(columnType == Types.REAL || columnType == Types.FLOAT || columnType == Types.DOUBLE || columnType == Types.DECIMAL
+                || columnType == Types.NUMERIC) {
+                    sql.append(rs.getDouble(columnIndex)).append(", ");
+                }
+
+                else if(columnType == Types.BINARY || columnType == Types.BLOB || columnType == Types.LONGVARBINARY || columnType == Types.VARBINARY) {
+                    sql.append("0x").append(bytesToHex(rs.getBytes(columnIndex))).append(", ");
                 }
                 else {
 
@@ -379,15 +393,19 @@ public class MysqlExportService {
         Connection connection;
 
         if(jdbcURL == null || jdbcURL.isEmpty()) {
-            connection = MysqlBaseService.connect(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
-                    database, driverName);
+            connection = MysqlBaseService.connect(
+                    properties.getProperty(DB_USERNAME),
+                    properties.getProperty(DB_PASSWORD),
+                    properties.getProperty(DB_HOST, "localhost"),
+                    properties.getProperty(DB_PORT, "3306"),
+                    database,
+                    driverName);
         }
         else {
             //this prioritizes the value set using the setDatabase() over the one extracted from the connection string
             //it will only use the one from the connection string if no value is set using the setDatabase()
             if(database == null || database.isEmpty()) {
                 database = MysqlBaseService.extractDatabaseNameFromJDBCUrl(jdbcURL);
-                logger.debug("database name extracted from connection string: " + database);
             }
             connection = MysqlBaseService.connectWithURL(properties.getProperty(DB_USERNAME), properties.getProperty(DB_PASSWORD),
                     jdbcURL, driverName);
@@ -442,6 +460,7 @@ public class MysqlExportService {
                     .setFromAddress(properties.getProperty(EMAIL_FROM))
                     .setUsername(properties.getProperty(EMAIL_USERNAME))
                     .setPassword(properties.getProperty(EMAIL_PASSWORD))
+                    .setSslProtocols(properties.getProperty(EMAIL_SSL_PROTOCOLS, "TLSv1.2"))
                     .setSubject(properties.getProperty(EMAIL_SUBJECT, sqlFileName.replace(".sql", "").toUpperCase()))
                     .setMessage(properties.getProperty(EMAIL_MESSAGE, "Please find attached database backup of " + database))
                     .setAttachments(new File[]{new File(zipFileName)})

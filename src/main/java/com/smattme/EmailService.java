@@ -25,6 +25,7 @@ class EmailService {
     private String password = "";
     private String subject = "";
     private String msg = "";
+    private String sslProtocols = "TLSv1.2";
     private File [] attachments;
     private Logger logger = LoggerFactory.getLogger(EmailService.class);
     private final String LOG_PREFIX = "java-mysql-exporter";
@@ -86,6 +87,11 @@ class EmailService {
         return this;
     }
 
+    EmailService setSslProtocols(String sslProtocols) {
+        this.sslProtocols = sslProtocols;
+        return this;
+    }
+
     /**
      * This will check if the necessary properties
      * are set for sending an email successfully
@@ -122,6 +128,7 @@ class EmailService {
         prop.put("mail.smtp.host", this.host);
         prop.put("mail.smtp.port", this.port);
         prop.put("mail.smtp.ssl.trust", host);
+        prop.put("mail.smtp.ssl.protocols", sslProtocols);
 
         logger.debug(LOG_PREFIX + ": Mail properties set");
 
