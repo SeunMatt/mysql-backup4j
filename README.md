@@ -40,6 +40,8 @@ Properties properties = new Properties();
 properties.setProperty(MysqlExportService.DB_NAME, "database-name");
 properties.setProperty(MysqlExportService.DB_USERNAME, "root");
 properties.setProperty(MysqlExportService.DB_PASSWORD, "root");
+properties.setProperty(MysqlExportService.DB_HOST, "localhost");
+properties.setProperty(MysqlExportService.DB_PORT, "3306");
         
 //properties relating to email config
 properties.setProperty(MysqlExportService.EMAIL_HOST, "smtp.mailtrap.io");
@@ -104,6 +106,8 @@ boolean res = MysqlImportService.builder()
         .setSqlString(sql)
         .setUsername("root")
         .setPassword("root")
+        .setHost("localhost")
+        .setPort("3306")
         .setDeleteExisting(true)
         .setDropExisting(true)
         .importDatabase();
@@ -138,7 +142,7 @@ Supplying `false` to these functions will disable their respective actions.
 
 CHANGELOG
 =========
-V 1.2.1
+v1.2.1
     - Raises a new runtime exception `MysqlBackup4JException` if the required properties are not configured
 
 Author

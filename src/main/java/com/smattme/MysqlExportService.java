@@ -42,6 +42,7 @@ public class MysqlExportService {
     public static final String EMAIL_MESSAGE = "EMAIL_MESSAGE";
     public static final String EMAIL_FROM = "EMAIL_FROM";
     public static final String EMAIL_TO = "EMAIL_TO";
+    public static final String EMAIL_SSL_PROTOCOLS = "EMAIL_SSL_PROTOCOLS";
     public static final String DB_NAME = "DB_NAME";
     public static final String DB_USERNAME = "DB_USERNAME";
     public static final String DB_PASSWORD = "DB_PASSWORD";
@@ -459,6 +460,7 @@ public class MysqlExportService {
                     .setFromAddress(properties.getProperty(EMAIL_FROM))
                     .setUsername(properties.getProperty(EMAIL_USERNAME))
                     .setPassword(properties.getProperty(EMAIL_PASSWORD))
+                    .setSslProtocols(properties.getProperty(EMAIL_SSL_PROTOCOLS, "TLSv1.2"))
                     .setSubject(properties.getProperty(EMAIL_SUBJECT, sqlFileName.replace(".sql", "").toUpperCase()))
                     .setMessage(properties.getProperty(EMAIL_MESSAGE, "Please find attached database backup of " + database))
                     .setAttachments(new File[]{new File(zipFileName)})
