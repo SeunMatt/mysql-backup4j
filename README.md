@@ -21,7 +21,7 @@ The artifact is available on Maven Central and can be added to the project's pom
 <dependency>
     <groupId>com.smattme</groupId>
     <artifactId>mysql-backup4j</artifactId>
-    <version>1.2.1</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
