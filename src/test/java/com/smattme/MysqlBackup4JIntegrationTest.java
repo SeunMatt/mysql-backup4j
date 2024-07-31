@@ -155,6 +155,8 @@ class MysqlBackup4JIntegrationTest {
         properties.setProperty(MysqlExportService.EMAIL_FROM, "test@smattme.com");
         properties.setProperty(MysqlExportService.EMAIL_TO, "backup@smattme.com");
         properties.setProperty(MysqlExportService.EMAIL_SSL_PROTOCOLS, "TLSv1.2");
+        properties.setProperty(MysqlExportService.EMAIL_SMTP_AUTH_ENABLED, "true");
+        properties.setProperty(MysqlExportService.EMAIL_START_TLS_ENABLED, "true");
 
         MysqlExportService mysqlExportService = new MysqlExportService(properties);
         mysqlExportService.export();

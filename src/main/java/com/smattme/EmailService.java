@@ -26,6 +26,8 @@ class EmailService {
     private String subject = "";
     private String msg = "";
     private String sslProtocols = "TLSv1.2";
+    private String startTlsEnabled = "true";
+    private boolean smtpAuthEnabled = true;
     private File [] attachments;
     private Logger logger = LoggerFactory.getLogger(EmailService.class);
     private final String LOG_PREFIX = "java-mysql-exporter";
@@ -89,6 +91,16 @@ class EmailService {
 
     EmailService setSslProtocols(String sslProtocols) {
         this.sslProtocols = sslProtocols;
+        return this;
+    }
+
+    EmailService setStartTlsEnabled(String startTlsEnabled) {
+        this.startTlsEnabled = startTlsEnabled;
+        return this;
+    }
+
+    EmailService setSmtpAuthEnabled(boolean smtpAuthEnabled) {
+        this.smtpAuthEnabled = smtpAuthEnabled;
         return this;
     }
 
