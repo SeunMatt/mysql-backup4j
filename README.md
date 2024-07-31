@@ -50,6 +50,7 @@ properties.setProperty(MysqlExportService.EMAIL_USERNAME, "mailtrap-username");
 properties.setProperty(MysqlExportService.EMAIL_PASSWORD, "mailtrap-password");
 properties.setProperty(MysqlExportService.EMAIL_FROM, "test@smattme.com");
 properties.setProperty(MysqlExportService.EMAIL_TO, "backup@smattme.com");
+properties.setProperty(MysqlExportService.EMAIL_SSL_PROTOCOLS, "TLSv1.2"); //this is optional
 
 //set the outputs temp dir
 properties.setProperty(MysqlExportService.TEMP_DIR, new File("external").getPath());
