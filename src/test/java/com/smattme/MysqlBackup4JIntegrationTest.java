@@ -127,6 +127,7 @@ class MysqlBackup4JIntegrationTest {
         smtpServerContainer.start();
         int smtpPort = smtpServerContainer.getMappedPort(1025);
         int webPort = smtpServerContainer.getMappedPort(1080);
+        String smtpServerHost = smtpServerContainer.getHost();
 
 
         Properties properties = new Properties();
@@ -147,7 +148,7 @@ class MysqlBackup4JIntegrationTest {
         properties.setProperty(MysqlExportService.SQL_FILE_NAME, "test_output_file_name");
 
         //properties relating to email config
-        properties.setProperty(MysqlExportService.EMAIL_HOST, "127.0.0.1");
+        properties.setProperty(MysqlExportService.EMAIL_HOST, smtpServerHost);
         properties.setProperty(MysqlExportService.EMAIL_PORT, String.valueOf(smtpPort));
         properties.setProperty(MysqlExportService.EMAIL_USERNAME, "username");
         properties.setProperty(MysqlExportService.EMAIL_PASSWORD, "password");
@@ -159,8 +160,8 @@ class MysqlBackup4JIntegrationTest {
         mysqlExportService.export();
 
 
-        String url = String.format("http://127.0.0.1:%s/api/emails?from=test@smattme.com&to=backup@smattme.com",
-                webPort);
+        String url = String.format("http://%s:%s/api/emails?from=test@smattme.com&to=backup@smattme.com",
+                smtpServerHost, webPort);
 
         InputStream inputStream = new URL(url).openConnection().getInputStream();
         try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
