@@ -1,13 +1,19 @@
 package com.smattme;
 
-import com.smattme.exceptions.MysqlBackup4JException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.smattme.exceptions.MysqlBackup4JException;
 
 /**
  * Created by seun_ on 01-Mar-18.
@@ -91,30 +97,59 @@ public class MysqlBaseService {
     }
 
     /**
+     * Overloaded version of {@link #getAllTablesAndViews(String, Statement, List)} that retrieves
+     * all tables and views from the specified database without filtering by a specific table list.
+     * This method delegates to the overloaded method by passing an empty list,
+     * which results in including all tables and views.
+     *
+     * @param database the database name
+     * @param stmt Statement object
+     * @return a TablesResponse object containing the list of all tables and views.
+     * @throws SQLException 
+     */
+    static TablesResponse getAllTablesAndViews(String database, Statement stmt) throws SQLException {
+        return getAllTablesAndViews(database,stmt,new ArrayList<String>());
+    }
+    
+    /**
      * This is a utility function to get the names of all
      * the tables and views that're in the database supplied
      * @param database the database name
      * @param stmt Statement object
+     * @param specificTableList  List of specific tables to include (if empty, include all)
      * @return TableResponse object containing the list of tables and views
      * @throws SQLException exception
      */
-    static TablesResponse getAllTablesAndViews(String database, Statement stmt) throws SQLException {
+    static TablesResponse getAllTablesAndViews(String database, Statement stmt, List<String> specificTableList) throws SQLException {
 
         List<String> tables = new ArrayList<>();
         List<String> views = new ArrayList<>();
 
-        ResultSet rs;
-        rs = stmt.executeQuery("SHOW TABLE STATUS FROM `" + database + "`;");
+        String query;
+        if (specificTableList.isEmpty()) {
+            query = "SHOW TABLE STATUS FROM `" + database + "`;";
+        } else {
+            // Build an IN clause with the specific table names
+            String inClause = specificTableList.stream()
+                    .map(table -> "'" + table + "'")
+                    .collect(Collectors.joining(", "));
+            query = "SHOW TABLE STATUS FROM `" + database + "` WHERE `Name` IN (" + inClause + ");";
+        }
+        
+        ResultSet rs = stmt.executeQuery(query);
+        
         while ( rs.next() ) {
+            
+            String tableName = rs.getString("Name");
             String comment = rs.getString("Comment");
+            
             if("VIEW".equals(comment)) {
-                views.add(rs.getString("Name"));
-            }
-            else {
-                tables.add(rs.getString("Name"));
+                views.add(tableName);
+            } else {
+                tables.add(tableName);
             }
         }
-
+        
         return new TablesResponse(tables, views);
     }
 

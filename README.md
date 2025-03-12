@@ -89,6 +89,13 @@ Finally, let's say for some reason you want the generated SQL string you can do 
 String generatedSql = mysqlExportService.getGeneratedSql();
 ```
 
+If u want to export **specific tables** from the database there is also a feature you need to give the  tables name as comma seperated names:
+
+```java
+properties.setProperty(MysqlExportService.SPECIFIC_TABLES_FOR_EXPORT, "table_1,table_2,table_3");
+```
+>**Note:** If you provide a table name with a typo or incorrect spelling, it will be ignored.
+
 Other parameters are:
 
 ```java
