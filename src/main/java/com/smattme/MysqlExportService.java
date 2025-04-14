@@ -258,8 +258,11 @@ public class MysqlExportService {
                     sql.append(rs.getObject(columnIndex)).append(", ");
                 }
                 else if( columnType == Types.INTEGER || columnType == Types.TINYINT || columnType == Types.BIT
-                        || columnType == Types.SMALLINT || columnType == Types.BIGINT) {
+                        || columnType == Types.SMALLINT) {
                     sql.append(rs.getInt(columnIndex)).append(", ");
+                }
+                else if( columnType == Types.BIGINT) {
+                    sql.append(rs.getLong(columnIndex)).append(", ");
                 }
                 else if(columnType == Types.REAL || columnType == Types.FLOAT || columnType == Types.DOUBLE || columnType == Types.DECIMAL
                 || columnType == Types.NUMERIC) {
